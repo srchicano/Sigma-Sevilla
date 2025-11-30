@@ -1,4 +1,4 @@
-import { User, Agent, ElementData, MaintenanceRecord, FaultRecord, MonthlyList, UserRole, InstallationType } from '../types';
+import { User, Agent, ElementData, MaintenanceRecord, FaultRecord, MonthlyList, UserRole, InstallationType, Roster } from '../types';
 
 // Mock Data Keys
 const KEYS = {
@@ -8,7 +8,8 @@ const KEYS = {
   MAINTENANCE: 'sigma_maintenance',
   FAULTS: 'sigma_faults',
   LISTS: 'sigma_lists',
-  SESSION: 'sigma_session'
+  SESSION: 'sigma_session',
+  ROSTER: 'sigma_roster'
 };
 
 // Check if we should use real backend (Environment Variable)
@@ -329,6 +330,39 @@ export const api = {
           });
       });
 
+      return stats;
+  },
+
+  // ROSTER METHODS
+  getRoster: async (sectorId: string, month: number, year: number): Promise<Roster | null> => {
+      if (USE_BACKEND) return await fetchAPI(`/roster?sectorId=${sectorId}&month=${month}&year=${year}`);
+
+      const rosters = JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
+      const roster = rosters.find((r: Roster) => r.sectorId === sectorId && r.month === month && r.year === year);
+      return roster || null;
+  },
+  saveRoster: async (roster: Roster) => {
+      if (USE_BACKEND) return await fetchAPI('/roster', 'POST', roster);
+
+      let rosters = JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
+      rosters = rosters.filter((r: Roster) => !(r.sectorId === roster.sectorId && r.month === roster.month && r.year === roster.year));
+      rosters.push(roster);
+      localStorage.setItem(KEYS.ROSTER, JSON.stringify(rosters));
+  },
+  getRosterStats: async (sectorId: string, year: number): Promise<Record<string, Record<string, number>>> => {
+      if (USE_BACKEND) return await fetchAPI(`/roster/stats?sectorId=${sectorId}&year=${year}`);
+
+      const rosters = JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
+      const stats: Record<string, Record<string, number>> = {};
+
+      rosters.filter((r: Roster) => r.sectorId === sectorId && r.year === year).forEach((r: Roster) => {
+          Object.keys(r.data).forEach(agentId => {
+               if(!stats[agentId]) stats[agentId] = {};
+               Object.values(r.data[agentId]).forEach((type: string) => {
+                   if(type) stats[agentId][type] = (stats[agentId][type] || 0) + 1;
+               });
+          });
+      });
       return stats;
   }
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Trash2, Download, BarChart2, Save, Calendar, Clock, User, AlertTriangle, FileText } from 'lucide-react';
-import { Agent, Sector, User as UserType, UserRole, MonthlyList, InstallationType, ElementData, MaintenanceRecord, FaultRecord } from '../types';
-import { SECTORS, STATIONS, INSTALLATION_TYPES, MONTH_NAMES } from '../constants';
+import { X, Check, Trash2, Download, BarChart2, Save, Calendar, Clock, User, AlertTriangle, FileText, Grid } from 'lucide-react';
+import { Agent, Sector, User as UserType, UserRole, MonthlyList, InstallationType, ElementData, MaintenanceRecord, FaultRecord, Roster } from '../types';
+import { SECTORS, STATIONS, INSTALLATION_TYPES, MONTH_NAMES, SHIFT_TYPES } from '../constants';
 import { api } from '../services/storage';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
@@ -588,6 +588,215 @@ export const DashboardModal = ({ isOpen, onClose }: any) => {
     );
 };
 
+// --- ROSTER MODAL ---
+export const RosterModal = ({ isOpen, onClose, sectorId, agents }: any) => {
+    const [activeTab, setActiveTab] = useState('grafico');
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedShift, setSelectedShift] = useState('M');
+    
+    const [rosterData, setRosterData] = useState<Roster | null>(null);
+    const [localData, setLocalData] = useState<Record<string, Record<string, string>>>({}); // AgentId -> Day -> Code
+    
+    // Stats
+    const [monthlyStats, setMonthlyStats] = useState<Record<string, Record<string, number>>>({});
+    const [yearlyStats, setYearlyStats] = useState<Record<string, Record<string, number>>>({});
+
+    useEffect(() => {
+        if(isOpen && sectorId) {
+            loadRoster();
+            if(activeTab === 'datos') loadStats();
+        }
+    }, [isOpen, sectorId, month, year, activeTab]);
+
+    const loadRoster = async () => {
+        const roster = await api.getRoster(sectorId, month, year);
+        setRosterData(roster);
+        setLocalData(roster?.data || {});
+    };
+
+    const loadStats = async () => {
+        // Calculate Monthly from localData or loaded data
+        const mStats: any = {};
+        agents.forEach((a: Agent) => {
+             mStats[a.id] = {};
+             const agentData = (isEditing ? localData : rosterData?.data)?.[a.id] || {};
+             Object.values(agentData).forEach((code: any) => {
+                 if(code) mStats[a.id][code] = (mStats[a.id][code] || 0) + 1;
+             });
+        });
+        setMonthlyStats(mStats);
+
+        // Fetch Yearly
+        const yStats = await api.getRosterStats(sectorId, year);
+        setYearlyStats(yStats);
+    };
+
+    const handleCellClick = (agentId: string, day: number) => {
+        if (!isEditing) return;
+        setLocalData(prev => ({
+            ...prev,
+            [agentId]: {
+                ...(prev[agentId] || {}),
+                [day]: selectedShift
+            }
+        }));
+    };
+
+    const handleSave = async () => {
+        await api.saveRoster({
+            id: rosterData?.id || Date.now().toString(),
+            sectorId,
+            month,
+            year,
+            data: localData
+        });
+        setIsEditing(false);
+        loadRoster();
+    };
+
+    const handleCancel = () => {
+        setLocalData(rosterData?.data || {});
+        setIsEditing(false);
+    };
+
+    const getDaysInMonth = (m: number, y: number) => new Date(y, m, 0).getDate();
+    const isWeekend = (d: number, m: number, y: number) => {
+        const date = new Date(y, m - 1, d);
+        return date.getDay() === 0 || date.getDay() === 6;
+    };
+
+    if (!isOpen) return null;
+
+    const days = Array.from({ length: getDaysInMonth(month, year) }, (_, i) => i + 1);
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white rounded-lg w-[95vw] h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <div className="bg-[#006338] p-4 flex justify-between items-center text-white">
+                     <div className="flex gap-4">
+                        <button onClick={() => setActiveTab('grafico')} className={`font-bold pb-1 ${activeTab === 'grafico' ? 'border-b-2 border-white' : 'opacity-70'}`}>Gráfico Mensual</button>
+                        <button onClick={() => setActiveTab('datos')} className={`font-bold pb-1 ${activeTab === 'datos' ? 'border-b-2 border-white' : 'opacity-70'}`}>Datos Gráfico</button>
+                    </div>
+                    <button onClick={onClose}><X /></button>
+                </div>
+
+                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                    <div className="flex items-center gap-4">
+                        <select className="border p-2 rounded" value={month} onChange={e => setMonth(Number(e.target.value))}>
+                            {MONTH_NAMES.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+                        </select>
+                        <span className="font-bold text-gray-700">{year}</span>
+                    </div>
+                    {activeTab === 'grafico' && (
+                        isEditing ? (
+                            <div className="flex items-center gap-4">
+                                <select className="border p-2 rounded bg-white shadow-sm" value={selectedShift} onChange={e => setSelectedShift(e.target.value)}>
+                                    {Object.entries(SHIFT_TYPES).map(([code, config]) => (
+                                        <option key={code} value={code}>{config.label} ({code})</option>
+                                    ))}
+                                </select>
+                                <button onClick={handleSave} className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Guardar</button>
+                                <button onClick={handleCancel} className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600">Cancelar</button>
+                            </div>
+                        ) : (
+                            <button onClick={() => setIsEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Editar</button>
+                        )
+                    )}
+                </div>
+
+                <div className="flex-1 overflow-auto p-4">
+                    {activeTab === 'grafico' && (
+                        <table className="w-full border-collapse text-xs">
+                            <thead>
+                                <tr>
+                                    <th className="border p-2 bg-gray-100 sticky left-0 z-10 w-40">Agente</th>
+                                    {days.map(d => (
+                                        <th key={d} className={`border p-1 w-8 text-center ${isWeekend(d, month, year) ? 'bg-gray-200' : 'bg-white'}`}>{d}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {agents.map((agent: Agent) => (
+                                    <tr key={agent.id}>
+                                        <td className="border p-2 font-bold sticky left-0 bg-white z-10">{agent.name}</td>
+                                        {days.map(d => {
+                                            const code = localData[agent.id]?.[d] || '';
+                                            const config = SHIFT_TYPES[code] || SHIFT_TYPES[''];
+                                            const isWe = isWeekend(d, month, year);
+                                            return (
+                                                <td 
+                                                    key={d} 
+                                                    onClick={() => handleCellClick(agent.id, d)}
+                                                    className={`border p-1 text-center font-bold cursor-pointer transition-colors border-gray-300
+                                                        ${config.color} 
+                                                        ${!code && isWe ? 'bg-gray-200' : ''}
+                                                        ${isEditing ? 'hover:ring-2 hover:ring-inset hover:ring-blue-500' : ''}
+                                                    `}
+                                                >
+                                                    {code}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    {activeTab === 'datos' && (
+                        <div className="grid grid-cols-2 gap-8 h-full">
+                            <div className="bg-white rounded shadow p-4 overflow-auto">
+                                <h3 className="font-bold text-center mb-4 text-[#006338]">Datos Mensuales ({MONTH_NAMES[month-1]})</h3>
+                                <table className="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th className="border p-2 bg-gray-100">Agente</th>
+                                            {Object.keys(SHIFT_TYPES).filter(k => k).map(k => <th key={k} className="border p-1">{k}</th>)}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {agents.map((a: Agent) => (
+                                            <tr key={a.id}>
+                                                <td className="border p-2 font-medium">{a.name}</td>
+                                                {Object.keys(SHIFT_TYPES).filter(k => k).map(k => (
+                                                    <td key={k} className="border p-1 text-center bg-gray-50">{monthlyStats[a.id]?.[k] || 0}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="bg-white rounded shadow p-4 overflow-auto">
+                                <h3 className="font-bold text-center mb-4 text-[#006338]">Datos Anuales ({year})</h3>
+                                <table className="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th className="border p-2 bg-gray-100">Agente</th>
+                                            {Object.keys(SHIFT_TYPES).filter(k => k).map(k => <th key={k} className="border p-1">{k}</th>)}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {agents.map((a: Agent) => (
+                                            <tr key={a.id}>
+                                                <td className="border p-2 font-medium">{a.name}</td>
+                                                {Object.keys(SHIFT_TYPES).filter(k => k).map(k => (
+                                                    <td key={k} className="border p-1 text-center bg-gray-50">{yearlyStats[a.id]?.[k] || 0}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- ELEMENT FORM MODAL (ADD / MAINTENANCE) ---
 // Extracted to separate function to prevent focus loss
 const FormField = ({ label, value, onChange, placeholder = '' }: any) => (
@@ -606,6 +815,7 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
     const [name, setName] = useState('');
     const [data, setData] = useState<any>({});
     const [turn, setTurn] = useState('Mañana'); // Added Turn State
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Added Date State for Maintenance
 
     useEffect(() => {
         if(isOpen) {
@@ -617,6 +827,7 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                 setData({});
             }
             setTurn('Mañana'); // Reset default
+            setDate(new Date().toISOString().split('T')[0]); // Reset date to today
         }
     }, [isOpen, existingElement]);
 
@@ -647,12 +858,12 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
             await api.addMaintenance({
                 id: Date.now().toString(),
                 elementId: existingElement.id,
-                date: new Date().toLocaleDateString(), // Simplification: Uses current local date string (DD/MM/YYYY)
+                date: date, // Use selected date instead of current date
                 turn: turn,
                 agents: data.lastAgents ? [data.lastAgents] : [],
                 dataSnapshot: data
             });
-            await api.updateElement({ ...existingElement, data, lastMaintenanceDate: new Date().toLocaleDateString() });
+            await api.updateElement({ ...existingElement, data, lastMaintenanceDate: date });
         } else {
             await api.createElement({
                 id: Date.now().toString(),
@@ -688,19 +899,30 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                         />
                     </div>
                     
-                    {/* Turno Selector only for Maintenance */}
+                    {/* Date and Turno Selector only for Maintenance */}
                     {isMaintenance && (
-                        <div className="mb-4">
-                            <label className="block font-bold text-gray-700 mb-1">Turno</label>
-                            <select 
-                                className="w-full border p-2 rounded focus:ring-1 focus:ring-green-600 focus:outline-none"
-                                value={turn}
-                                onChange={(e) => setTurn(e.target.value)}
-                            >
-                                <option value="Mañana">Mañana</option>
-                                <option value="Tarde">Tarde</option>
-                                <option value="Noche">Noche</option>
-                            </select>
+                        <div className="flex gap-4 mb-4">
+                            <div className="flex-1">
+                                <label className="block font-bold text-gray-700 mb-1">Fecha</label>
+                                <input 
+                                    type="date"
+                                    className="w-full border p-2 rounded focus:ring-1 focus:ring-green-600 focus:outline-none"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block font-bold text-gray-700 mb-1">Turno</label>
+                                <select 
+                                    className="w-full border p-2 rounded focus:ring-1 focus:ring-green-600 focus:outline-none"
+                                    value={turn}
+                                    onChange={(e) => setTurn(e.target.value)}
+                                >
+                                    <option value="Mañana">Mañana</option>
+                                    <option value="Tarde">Tarde</option>
+                                    <option value="Noche">Noche</option>
+                                </select>
+                            </div>
                         </div>
                     )}
 

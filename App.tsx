@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { SECTORS, STATIONS, INSTALLATION_TYPES } from './constants';
 import { api, checkSemesterReset } from './services/storage';
-import { LogOut, Bell, User as UserIcon, Users, FileText, LayoutDashboard, ArrowLeft, Search, AlertTriangle, History } from 'lucide-react';
-import { AgentsModal, UserManagementModal, NotificationsModal, ReportsModal, DashboardModal, ElementFormModal, FaultFormModal, FaultHistoryModal, MaintenanceHistoryModal } from './components/Modals';
+import { LogOut, Bell, User as UserIcon, Users, FileText, LayoutDashboard, ArrowLeft, Search, AlertTriangle, History, Grid } from 'lucide-react';
+import { AgentsModal, UserManagementModal, NotificationsModal, ReportsModal, DashboardModal, ElementFormModal, FaultFormModal, FaultHistoryModal, MaintenanceHistoryModal, RosterModal } from './components/Modals';
 import ElementCard from './components/ElementCard';
 
 type View = 'LOGIN' | 'SECTORS' | 'ESTACIONES' | 'INSTALACIONES' | 'ELEMENTOS';
@@ -22,6 +22,7 @@ function App() {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showDash, setShowDash] = useState(false);
+  const [showRoster, setShowRoster] = useState(false); // Added Roster State
   
   // New Modals State
   const [showAddElement, setShowAddElement] = useState(false);
@@ -260,6 +261,11 @@ function App() {
                     {/* Action Buttons */}
                     {(view === 'SECTORS' || view === 'ESTACIONES' || view === 'INSTALACIONES') && (
                         <div className="hidden lg:flex gap-3">
+                            {view === 'ESTACIONES' && (
+                                <button onClick={() => setShowRoster(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-medium backdrop-blur-sm">
+                                    <Grid size={16}/> Gráfico
+                                </button>
+                            )}
                             <button onClick={() => setShowAgents(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition text-sm font-medium backdrop-blur-sm">
                                 <Users size={16}/> Agentes
                             </button>
@@ -472,6 +478,14 @@ function App() {
         <UserManagementModal isOpen={showUsers} onClose={() => setShowUsers(false)} currentUserRole={user.role} />
         <ReportsModal isOpen={showReports} onClose={() => setShowReports(false)} />
         <DashboardModal isOpen={showDash} onClose={() => setShowDash(false)} />
+        
+        {/* ROSTER MODAL */}
+        <RosterModal 
+            isOpen={showRoster}
+            onClose={() => setShowRoster(false)}
+            sectorId={navState.sectorId}
+            agents={agentsList.filter(a => a.assignedSectorId === navState.sectorId)}
+        />
         
         {/* ADD ELEMENT MODAL */}
         <ElementFormModal 

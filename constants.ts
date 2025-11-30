@@ -86,3 +86,19 @@ export const MONTH_NAMES = [
 ];
 
 export const THEME_COLOR = '#006338';
+
+export const SHIFT_TYPES: Record<string, { label: string, color: string }> = {
+    'M': { label: 'Mañana', color: 'bg-green-200 text-green-900 border-green-300' },
+    'T': { label: 'Tarde', color: 'bg-orange-200 text-orange-900 border-orange-300' },
+    'N': { label: 'Noche', color: 'bg-blue-200 text-blue-900 border-blue-300' },
+    'G': { label: 'Guardia', color: 'bg-orange-300 text-orange-900 border-orange-400' },
+    'G.': { label: 'Guardia Festivo', color: 'bg-orange-300 text-orange-900 border-orange-400' },
+    'RJ': { label: 'Red. Jornada', color: 'bg-purple-200 text-purple-900 border-purple-300' },
+    'LZ': { label: 'Asuntos Propios', color: 'bg-purple-200 text-purple-900 border-purple-300' },
+    'H': { label: 'Licencia Médica', color: 'bg-purple-200 text-purple-900 border-purple-300' },
+    'Re': { label: 'Reemplazo', color: 'bg-red-200 text-red-900 border-red-300' },
+    'VB': { label: 'Vacaciones', color: 'bg-purple-200 text-purple-900 border-purple-300' },
+    'VBA': { label: 'Conv. Vacaciones', color: 'bg-purple-200 text-purple-900 border-purple-300' },
+    'Ge': { label: 'Gerencia', color: 'bg-red-200 text-red-900 border-red-300' },
+    '': { label: 'Vacío', color: 'bg-white' }
+};

@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const { User, Agent, Element, Maintenance, Fault, MonthlyList } = require('./backend_models');
+const { User, Agent, Element, Maintenance, Fault, MonthlyList, Roster } = require('./backend_models');
 
 const app = express();
 app.use(cors());
@@ -159,8 +159,6 @@ app.get('/api/reports/daily', async (req, res) => {
 
 app.get('/api/reports/monthly', async (req, res) => {
     const { month, year } = req.query;
-    // Note: Date parsing in mongo might require ISO dates. 
-    // This is a simplified string match. In production use ISODate.
     const records = await Maintenance.find({}); 
     const filtered = [];
     for(let r of records) {
@@ -215,6 +213,41 @@ app.get('/api/stats', async (req, res) => {
              stats[item.installationType].total++;
              const el = await Element.findOne({ id: item.elementId });
              if(el && el.isCompleted) stats[item.installationType].completed++;
+        }
+    }
+    res.json(stats);
+});
+
+// ROSTER
+app.get('/api/roster', async (req, res) => {
+    const { sectorId, month, year } = req.query;
+    const roster = await Roster.findOne({ sectorId, month, year });
+    res.json(roster);
+});
+
+app.post('/api/roster', async (req, res) => {
+    const { sectorId, month, year, data } = req.body;
+    // Update or Insert
+    const roster = await Roster.findOneAndUpdate(
+        { sectorId, month, year },
+        { data },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    res.json(roster);
+});
+
+app.get('/api/roster/stats', async (req, res) => {
+    const { sectorId, year } = req.query;
+    const rosters = await Roster.find({ sectorId, year });
+    // Aggregate data
+    const stats = {};
+    for (const r of rosters) {
+        for (const agentId in r.data) {
+            if (!stats[agentId]) stats[agentId] = {};
+            for (const day in r.data[agentId]) {
+                const type = r.data[agentId][day];
+                if (type) stats[agentId][type] = (stats[agentId][type] || 0) + 1;
+            }
         }
     }
     res.json(stats);

@@ -93,3 +93,12 @@ export interface MonthlyList {
     completed: boolean;
   }[];
 }
+
+export interface Roster {
+  id: string;
+  sectorId: string;
+  month: number;
+  year: number;
+  // Map agentId -> day (1-31) -> Shift Code
+  data: Record<string, Record<string, string>>; 
+}

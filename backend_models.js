@@ -62,11 +62,20 @@ const MonthlyListSchema = new mongoose.Schema({
   }]
 });
 
+const RosterSchema = new mongoose.Schema({
+    id: String,
+    sectorId: String,
+    month: Number,
+    year: Number,
+    data: Object // Map: agentId -> { "1": "M", "2": "N"... }
+});
+
 module.exports = {
   User: mongoose.model('User', UserSchema),
   Agent: mongoose.model('Agent', AgentSchema),
   Element: mongoose.model('Element', ElementSchema),
   Maintenance: mongoose.model('Maintenance', MaintenanceSchema),
   Fault: mongoose.model('Fault', FaultSchema),
-  MonthlyList: mongoose.model('MonthlyList', MonthlyListSchema)
+  MonthlyList: mongoose.model('MonthlyList', MonthlyListSchema),
+  Roster: mongoose.model('Roster', RosterSchema)
 };
