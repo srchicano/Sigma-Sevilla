@@ -55,6 +55,7 @@ export interface MaintenanceRecord {
   id: string;
   elementId: string;
   date: string;
+  turn: string; // Added turn
   agents: string[];
   dataSnapshot: Record<string, any>; // Snapshot of element data at time of maintenance
 }

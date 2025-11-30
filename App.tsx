@@ -166,9 +166,6 @@ function App() {
                     <p className="text-center text-sm mt-4 text-gray-600">
                         ¿No tienes cuenta? <button type="button" onClick={() => setIsRegistering(true)} className="text-[#006338] font-bold hover:underline">Regístrate</button>
                     </p>
-                    <div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded text-xs text-gray-500 text-center">
-                        Credenciales Demo: <b>srchicano</b> / <b>admin</b>
-                    </div>
                 </form>
             ) : (
                 <form onSubmit={handleRegister} className="space-y-4">
@@ -502,7 +499,7 @@ function App() {
             isOpen={showFault}
             onClose={() => setShowFault(false)}
             element={selectedElement}
-            onSubmit={loadElements} // Ideally refresh fault history
+            onSubmit={loadElements}
         />
 
         {/* HISTORY MODALS */}

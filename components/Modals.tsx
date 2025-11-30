@@ -269,6 +269,9 @@ export const ReportsModal = ({ isOpen, onClose }: any) => {
                 head: [['Elemento', 'Estación', 'Agentes']],
                 body: rows,
             });
+            if (rows.length === 0) {
+                 doc.text("No se encontraron registros para esta fecha y turno.", 10, 50);
+            }
         } else if (type === 'Mensual') {
              doc.text(`Informe de Mantenimiento Mensual - Mes: ${MONTH_NAMES[month-1]}`, 10, 30);
              const data = await api.getMonthlyMaintenance(Number(month), new Date().getFullYear());
@@ -317,9 +320,9 @@ export const ReportsModal = ({ isOpen, onClose }: any) => {
                              <div className="flex-1">
                                 <label className="block text-sm font-medium mb-1">Turno</label>
                                 <select className="w-full border p-2 rounded" value={turn} onChange={e => setTurn(e.target.value)}>
-                                    <option>Mañana</option>
-                                    <option>Tarde</option>
-                                    <option>Noche</option>
+                                    <option value="Mañana">Mañana</option>
+                                    <option value="Tarde">Tarde</option>
+                                    <option value="Noche">Noche</option>
                                 </select>
                              </div>
                         </div>
@@ -602,7 +605,8 @@ const FormField = ({ label, value, onChange, placeholder = '' }: any) => (
 export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingElement, isMaintenance = false, onSubmit }: any) => {
     const [name, setName] = useState('');
     const [data, setData] = useState<any>({});
-    
+    const [turn, setTurn] = useState('Mañana'); // Added Turn State
+
     useEffect(() => {
         if(isOpen) {
             if (existingElement) {
@@ -612,6 +616,7 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                 setName('');
                 setData({});
             }
+            setTurn('Mañana'); // Reset default
         }
     }, [isOpen, existingElement]);
 
@@ -642,7 +647,8 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
             await api.addMaintenance({
                 id: Date.now().toString(),
                 elementId: existingElement.id,
-                date: new Date().toLocaleDateString(),
+                date: new Date().toLocaleDateString(), // Simplification: Uses current local date string (DD/MM/YYYY)
+                turn: turn,
                 agents: data.lastAgents ? [data.lastAgents] : [],
                 dataSnapshot: data
             });
@@ -681,6 +687,23 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                             disabled={isMaintenance} 
                         />
                     </div>
+                    
+                    {/* Turno Selector only for Maintenance */}
+                    {isMaintenance && (
+                        <div className="mb-4">
+                            <label className="block font-bold text-gray-700 mb-1">Turno</label>
+                            <select 
+                                className="w-full border p-2 rounded focus:ring-1 focus:ring-green-600 focus:outline-none"
+                                value={turn}
+                                onChange={(e) => setTurn(e.target.value)}
+                            >
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noche">Noche</option>
+                            </select>
+                        </div>
+                    )}
+
                     <div className="mb-4">
                          <FormField label="Agentes (Nombre, Apellidos)" value={getValue('lastAgents')} onChange={(v: string) => handleDataChange('lastAgents', v)} placeholder="Ej: Chicano, Pérez" />
                          {type === InstallationType.CIRCUITOS && <FormField label="Frecuencia" value={getValue('frecuencia')} onChange={(v: string) => handleDataChange('frecuencia', v)} placeholder="Ej: 13.5 kHz" />}
@@ -1073,6 +1096,7 @@ export const MaintenanceHistoryModal = ({ isOpen, onClose, elements }: any) => {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-lg font-bold">{selectedRecord.date}</p>
+                                        <p className="text-sm font-semibold text-gray-600 mb-1">Turno: {selectedRecord.turn || 'N/A'}</p>
                                         <p className="text-sm text-gray-600">Agentes: {selectedRecord.agents.join(', ')}</p>
                                     </div>
                                 </div>

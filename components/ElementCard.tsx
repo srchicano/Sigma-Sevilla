@@ -49,19 +49,21 @@ const ElementCard: React.FC<ElementCardProps> = ({ element, onUpdate, onOpenFaul
 
   const renderInput = (label: string, path: string, placeholder: string) => {
       const keys = path.split('.');
-      let val = localData;
+      let val: any = localData;
       for (const k of keys) val = val?.[k];
+
+      const safeVal = (typeof val === 'string' || typeof val === 'number') ? val : '';
 
       return isEditing ? (
         <input 
             className="w-full border p-1 rounded text-sm bg-yellow-50"
-            value={val || ''}
+            value={safeVal}
             onChange={(e) => handleInputChange(path, e.target.value)}
             placeholder={placeholder}
             onClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <span className="font-medium text-gray-800">{val || '-'}</span>
+        <span className="font-medium text-gray-800">{safeVal || '-'}</span>
       );
   };
 
