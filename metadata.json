@@ -1,0 +1,5 @@
+{
+  "name": "Sigma-Sevilla Maintenance",
+  "description": "Railway maintenance management system for Seville network (ADIF). Manages sectors, stations, installations, and detailed element maintenance.",
+  "requestFramePermissions": []
+}
