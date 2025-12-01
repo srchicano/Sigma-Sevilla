@@ -1,19 +1,30 @@
+
 // backend_server.js
 // COPY THIS FILE TO YOUR RENDER BACKEND REPO as index.js
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-const { User, Agent, Element, Maintenance, Fault, MonthlyList, Roster } = require('./backend_models');
+// Import models with .js extension required for ES Modules
+import { User, Agent, Element, Maintenance, Fault, MonthlyList, Roster } from './backend_models.js';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // CONNECT DB
-mongoose.connect(process.env.MONGODB_URI)
+// Ensure MONGODB_URI is set in Render Environment Variables
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  console.error("Error: MONGODB_URI environment variable is not set.");
+  process.exit(1);
+}
+
+mongoose.connect(mongoUri)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err));
 
@@ -125,7 +136,7 @@ app.post('/api/maintenance', async (req, res) => {
 
 app.get('/api/maintenance', async (req, res) => {
     const { elementId } = req.query;
-    const records = await Maintenance.find({ elementId }).sort({ id: -1 }); // simplistic sort
+    const records = await Maintenance.find({ elementId }).sort({ id: -1 }); 
     res.json(records);
 });
 

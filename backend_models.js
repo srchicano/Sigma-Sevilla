@@ -1,10 +1,11 @@
+
 // backend_models.js
 // COPY THIS FILE TO YOUR RENDER BACKEND REPO
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
-  id: String, // We can reuse the UUID from frontend or let Mongo handle _id
+  id: String,
   matricula: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   fullName: String,
@@ -25,7 +26,7 @@ const ElementSchema = new mongoose.Schema({
   name: String,
   isCompleted: Boolean,
   lastMaintenanceDate: String,
-  data: Object // Stores dynamic fields (receptores, reles, etc.)
+  data: Object
 });
 
 const MaintenanceSchema = new mongoose.Schema({
@@ -67,15 +68,13 @@ const RosterSchema = new mongoose.Schema({
     sectorId: String,
     month: Number,
     year: Number,
-    data: Object // Map: agentId -> { "1": "M", "2": "N"... }
+    data: Object
 });
 
-module.exports = {
-  User: mongoose.model('User', UserSchema),
-  Agent: mongoose.model('Agent', AgentSchema),
-  Element: mongoose.model('Element', ElementSchema),
-  Maintenance: mongoose.model('Maintenance', MaintenanceSchema),
-  Fault: mongoose.model('Fault', FaultSchema),
-  MonthlyList: mongoose.model('MonthlyList', MonthlyListSchema),
-  Roster: mongoose.model('Roster', RosterSchema)
-};
+export const User = mongoose.model('User', UserSchema);
+export const Agent = mongoose.model('Agent', AgentSchema);
+export const Element = mongoose.model('Element', ElementSchema);
+export const Maintenance = mongoose.model('Maintenance', MaintenanceSchema);
+export const Fault = mongoose.model('Fault', FaultSchema);
+export const MonthlyList = mongoose.model('MonthlyList', MonthlyListSchema);
+export const Roster = mongoose.model('Roster', RosterSchema);
