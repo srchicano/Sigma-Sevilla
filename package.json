@@ -1,16 +1,22 @@
 {
-          "name": "sigma-backend",
-          "version": "1.0.0",
-          "main": "index.js",
-          "scripts": {
-            "start": "node index.js"
-          },
-          "dependencies": {
-            "express": "^4.18.2",
-            "mongoose": "^7.0.3",
-            "cors": "^2.8.5",
-            "dotenv": "^16.0.3"
-          }
+  "name": "sigma-Sevilla",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.555.0",
+    "react": "^19.2.0",
+    "recharts": "^3.5.1",
+    "jspdf-autotable": "^5.0.2",
+    "jspdf": "^3.0.4"
+    "express": "^4.18.2",
+    "mongoose": "^7.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  }
 },
   "devDependencies": {
     "@types/node": "^22.14.0",
