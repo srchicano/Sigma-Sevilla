@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { X, Check, Trash2, Download, BarChart2, Save, Calendar, Clock, User, AlertTriangle, FileText, Grid } from 'lucide-react';
+import { X, Check, Trash2, Download, BarChart2, Save, Calendar, Clock, User, AlertTriangle, FileText, Grid, Lock } from 'lucide-react';
 import { Agent, Sector, User as UserType, UserRole, MonthlyList, InstallationType, ElementData, MaintenanceRecord, FaultRecord, Roster } from '../types';
 import { SECTORS, STATIONS, INSTALLATION_TYPES, MONTH_NAMES, SHIFT_TYPES } from '../constants';
 import { api } from '../services/storage';
@@ -1389,3 +1390,77 @@ const HistoryModal = ({ isOpen, onClose, title, elements, type }: any) => {
 
 export const MaintenanceHistoryModal = (props: any) => <HistoryModal {...props} title="Historial de Mantenimiento" type="maintenance" />;
 export const FaultHistoryModal = (props: any) => <HistoryModal {...props} title="Historial de Averías" type="faults" />;
+
+// --- CHANGE PASSWORD MODAL ---
+export const ChangePasswordModal = ({ isOpen, onClose, userId }: any) => {
+    const [oldPass, setOldPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if(isOpen) {
+            setOldPass('');
+            setNewPass('');
+            setConfirmPass('');
+            setError('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = async () => {
+        setError('');
+        if (!oldPass || !newPass || !confirmPass) {
+            setError('Todos los campos son obligatorios');
+            return;
+        }
+        if (newPass !== confirmPass) {
+            setError('Las contraseñas nuevas no coinciden');
+            return;
+        }
+
+        const success = await api.changePassword(userId, oldPass, newPass);
+        if (success) {
+            alert('Contraseña cambiada correctamente');
+            onClose();
+        } else {
+            setError('La contraseña antigua es incorrecta');
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
+                <div className="flex justify-between items-center mb-4">
+                     <h3 className="text-xl font-bold text-[#006338]">Cambiar Contraseña</h3>
+                     <button onClick={onClose}><X size={20}/></button>
+                </div>
+
+                <div className="space-y-4">
+                    {error && <div className="text-red-500 text-xs bg-red-50 p-2 rounded border border-red-200">{error}</div>}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Contraseña Antigua</label>
+                        <div className="relative">
+                            <input type="password" className="w-full border p-2 rounded pl-8" value={oldPass} onChange={e => setOldPass(e.target.value)} />
+                            <Lock className="absolute left-2 top-2.5 text-gray-400" size={16} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Contraseña Nueva</label>
+                        <input type="password" className="w-full border p-2 rounded" value={newPass} onChange={e => setNewPass(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Confirmar Contraseña</label>
+                        <input type="password" className="w-full border p-2 rounded" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} />
+                    </div>
+                    
+                    <div className="flex gap-2 pt-4">
+                         <button onClick={handleSubmit} className="flex-1 bg-[#006338] text-white py-2 rounded hover:bg-green-800">Aceptar</button>
+                         <button onClick={onClose} className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

@@ -1,10 +1,11 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { SECTORS, STATIONS, INSTALLATION_TYPES } from './constants';
 import { api, checkSemesterReset } from './services/storage';
 import { LogOut, Bell, User as UserIcon, Users, FileText, LayoutDashboard, ArrowLeft, Search, AlertTriangle, History, Grid } from 'lucide-react';
-import { AgentsModal, UserManagementModal, NotificationsModal, ReportsModal, DashboardModal, ElementFormModal, FaultFormModal, FaultHistoryModal, MaintenanceHistoryModal, RosterModal } from './components/Modals';
+import { AgentsModal, UserManagementModal, NotificationsModal, ReportsModal, DashboardModal, ElementFormModal, FaultFormModal, FaultHistoryModal, MaintenanceHistoryModal, RosterModal, ChangePasswordModal } from './components/Modals';
 import ElementCard from './components/ElementCard';
 
 type View = 'LOGIN' | 'SECTORS' | 'ESTACIONES' | 'INSTALACIONES' | 'ELEMENTOS';
@@ -23,7 +24,8 @@ function App() {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showDash, setShowDash] = useState(false);
-  const [showRoster, setShowRoster] = useState(false); // Added Roster State
+  const [showRoster, setShowRoster] = useState(false); 
+  const [showChangePassword, setShowChangePassword] = useState(false);
   
   // New Modals State
   const [showAddElement, setShowAddElement] = useState(false);
@@ -166,44 +168,56 @@ function App() {
 
   if (!user || view === 'LOGIN') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#006338] to-[#004d2c] flex items-center justify-center p-4 font-sans">
-         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-[#006338]"></div>
-            <div className="flex justify-center mb-8 relative">
-               <img src="https://www.adif.es/documents/20124/811001/Logo+Adif.png/" alt="Adif" className="h-20 drop-shadow-xl p-2" />
-            </div>
-            
-            {!isRegistering ? (
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div>
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Matrícula</label>
-                        <input className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-[#006338] focus:border-transparent transition" type="text" value={loginData.matricula} onChange={e => setLoginData({...loginData, matricula: e.target.value})} required />
-                    </div>
-                    <div>
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
-                        <input className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-[#006338] focus:border-transparent transition" type="password" value={loginData.password} onChange={e => setLoginData({...loginData, password: e.target.value})} required />
-                    </div>
-                    <button type="submit" className="w-full bg-[#006338] hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200">
-                        Iniciar Sesión
-                    </button>
-                    <p className="text-center text-sm mt-4 text-gray-600">
-                        ¿No tienes cuenta? <button type="button" onClick={() => setIsRegistering(true)} className="text-[#006338] font-bold hover:underline">Regístrate</button>
-                    </p>
-                </form>
-            ) : (
-                <form onSubmit={handleRegister} className="space-y-4">
-                    <h3 className="text-xl font-bold text-center text-[#006338]">Solicitud de Registro</h3>
-                    <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Nombre Completo" value={regData.fullName} onChange={e => setRegData({...regData, fullName: e.target.value})} required />
-                    <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Matrícula" value={regData.matricula} onChange={e => setRegData({...regData, matricula: e.target.value})} required />
-                    <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" type="password" placeholder="Contraseña" value={regData.password} onChange={e => setRegData({...regData, password: e.target.value})} required />
-                    <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Cargo" value={regData.cargo} onChange={e => setRegData({...regData, cargo: e.target.value})} required />
-                    <div className="flex gap-3 pt-2">
-                        <button type="submit" className="flex-1 bg-[#006338] hover:bg-green-800 text-white p-3 rounded-lg shadow font-medium transition">Enviar</button>
-                        <button type="button" onClick={() => setIsRegistering(false)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-3 rounded-lg font-medium transition">Volver</button>
-                    </div>
-                </form>
-            )}
+      <div className="min-h-screen bg-gradient-to-br from-[#006338] to-[#004d2c] flex flex-col font-sans">
+         
+         {/* Container to center the box */}
+         <div className="flex-1 flex flex-col items-center justify-center p-4">
+             <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-[#006338]"></div>
+                <div className="flex justify-center mb-8 relative">
+                   {/* CAMBIAR URL DE IMAGEN AQUÍ */}
+                   <img 
+                        src="https://www.adif.es/documents/20124/811001/Logo+Adif.png/bbc1e2e1-75a6-598b-5f61-cd1a71148ba1?t=1594885737132&download=true" 
+                        alt="Adif" 
+                        className="h-16 object-contain" 
+                   />
+                </div>
+                
+                {!isRegistering ? (
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div>
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Matrícula</label>
+                            <input className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-[#006338] focus:border-transparent transition" type="text" value={loginData.matricula} onChange={e => setLoginData({...loginData, matricula: e.target.value})} required />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
+                            <input className="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-[#006338] focus:border-transparent transition" type="password" value={loginData.password} onChange={e => setLoginData({...loginData, password: e.target.value})} required />
+                        </div>
+                        <button type="submit" className="w-full bg-[#006338] hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200">
+                            Iniciar Sesión
+                        </button>
+                        <p className="text-center text-sm mt-4 text-gray-600">
+                            ¿No tienes cuenta? <button type="button" onClick={() => setIsRegistering(true)} className="text-[#006338] font-bold hover:underline">Regístrate</button>
+                        </p>
+                    </form>
+                ) : (
+                    <form onSubmit={handleRegister} className="space-y-4">
+                        <h3 className="text-xl font-bold text-center text-[#006338]">Solicitud de Registro</h3>
+                        <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Nombre Completo" value={regData.fullName} onChange={e => setRegData({...regData, fullName: e.target.value})} required />
+                        <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Matrícula" value={regData.matricula} onChange={e => setRegData({...regData, matricula: e.target.value})} required />
+                        <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" type="password" placeholder="Contraseña" value={regData.password} onChange={e => setRegData({...regData, password: e.target.value})} required />
+                        <input className="border border-gray-300 rounded-lg w-full p-3 focus:ring-2 focus:ring-[#006338]" placeholder="Cargo" value={regData.cargo} onChange={e => setRegData({...regData, cargo: e.target.value})} required />
+                        <div className="flex gap-3 pt-2">
+                            <button type="submit" className="flex-1 bg-[#006338] hover:bg-green-800 text-white p-3 rounded-lg shadow font-medium transition">Enviar</button>
+                            <button type="button" onClick={() => setIsRegistering(false)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-3 rounded-lg font-medium transition">Volver</button>
+                        </div>
+                    </form>
+                )}
+             </div>
          </div>
+         
+         {/* Footer */}
+         <div className="text-white text-xs opacity-80 py-4 text-center">Hecho por MACV</div>
       </div>
     );
   }
@@ -319,7 +333,12 @@ function App() {
                             <NotificationsModal isOpen={showNotifs} onClose={() => setShowNotifs(false)} />
                         </div>
                         <div className="text-right hidden sm:block">
-                            <div className="font-bold text-sm leading-tight">{user.fullName}</div>
+                            <button 
+                                onClick={() => setShowChangePassword(true)}
+                                className="font-bold text-sm leading-tight hover:text-green-200 transition text-left"
+                            >
+                                {user.fullName}
+                            </button>
                             <div className="text-xs text-green-200">{user.role}</div>
                         </div>
                         <button onClick={handleLogout} className="flex flex-col items-center text-green-100 hover:text-red-300 transition" title="Salir">
@@ -514,6 +533,7 @@ function App() {
         <UserManagementModal isOpen={showUsers} onClose={() => setShowUsers(false)} currentUserRole={user.role} />
         <ReportsModal isOpen={showReports} onClose={() => setShowReports(false)} />
         <DashboardModal isOpen={showDash} onClose={() => setShowDash(false)} />
+        <ChangePasswordModal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} userId={user.id} />
         
         {/* ROSTER MODAL */}
         <RosterModal 

@@ -83,11 +83,14 @@ async function fetchAPI(endpoint: string, method: string = 'GET', body?: any) {
             body: body ? JSON.stringify(body) : undefined
         };
         const res = await fetch(`${API_URL}${endpoint}`, options);
-        if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || `API Error: ${res.statusText}`);
+        }
         return await res.json();
     } catch (err) {
         console.error(err);
-        return null;
+        return { error: err };
     }
 }
 
@@ -97,12 +100,8 @@ export const api = {
   // Users
   login: async (matricula: string, pass: string): Promise<User | null> => {
     if (USE_BACKEND) {
-        try {
-            const user = await fetchAPI('/users/login', 'POST', { matricula, password: pass });
-            return user;
-        } catch (e) {
-            return null;
-        }
+        const user = await fetchAPI('/users/login', 'POST', { matricula, password: pass });
+        return user && !user.error ? user : null;
     }
     const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '[]');
     const user = users.find((u: User) => u.matricula === matricula && u.password === pass);
@@ -123,9 +122,26 @@ export const api = {
     localStorage.setItem(KEYS.USERS, JSON.stringify(users));
     return newUser;
   },
-  getPendingUsers: async (): Promise<User[]> => {
-    if (USE_BACKEND) return await fetchAPI('/users/pending') || [];
+  changePassword: async (userId: string, oldPass: string, newPass: string) => {
+    if (USE_BACKEND) {
+        const res = await fetchAPI('/users/change-password', 'POST', { userId, oldPassword: oldPass, newPassword: newPass });
+        return res && res.success;
+    }
+    const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '[]');
+    const userIndex = users.findIndex((u: User) => u.id === userId);
+    
+    if (userIndex === -1) return false;
+    if (users[userIndex].password !== oldPass) return false;
 
+    users[userIndex].password = newPass;
+    localStorage.setItem(KEYS.USERS, JSON.stringify(users));
+    return true;
+  },
+  getPendingUsers: async (): Promise<User[]> => {
+    if (USE_BACKEND) {
+        const res = await fetchAPI('/users/pending');
+        return Array.isArray(res) ? res : [];
+    }
     const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '[]');
     return users.filter((u: User) => !u.isApproved);
   },
@@ -141,7 +157,10 @@ export const api = {
     localStorage.setItem(KEYS.USERS, JSON.stringify(users));
   },
   getUsers: async (): Promise<User[]> => {
-      if (USE_BACKEND) return await fetchAPI('/users') || [];
+      if (USE_BACKEND) {
+          const res = await fetchAPI('/users');
+          return Array.isArray(res) ? res : [];
+      }
       return JSON.parse(localStorage.getItem(KEYS.USERS) || '[]');
   },
   deleteUser: async (id: string) => {
@@ -161,7 +180,10 @@ export const api = {
 
   // Agents
   getAgents: async (): Promise<Agent[]> => {
-      if (USE_BACKEND) return await fetchAPI('/agents') || [];
+      if (USE_BACKEND) {
+          const res = await fetchAPI('/agents');
+          return Array.isArray(res) ? res : [];
+      }
       return JSON.parse(localStorage.getItem(KEYS.AGENTS) || '[]');
   },
   createAgent: async (name: string) => {
@@ -189,14 +211,18 @@ export const api = {
 
   // Elements
   getElements: async (stationId: string, type: InstallationType): Promise<ElementData[]> => {
-    if (USE_BACKEND) return await fetchAPI(`/elements?stationId=${stationId}&type=${type}`) || [];
-
+    if (USE_BACKEND) {
+        const res = await fetchAPI(`/elements?stationId=${stationId}&type=${type}`);
+        return Array.isArray(res) ? res : [];
+    }
     const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
     return elements.filter((e: ElementData) => e.stationId === stationId && e.installationType === type);
   },
   getElementCounts: async (stationId: string): Promise<Record<string, number>> => {
-      if (USE_BACKEND) return await fetchAPI(`/elements/counts?stationId=${stationId}`) || {};
-
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/elements/counts?stationId=${stationId}`);
+          return res && !res.error ? res : {};
+      }
       const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
       const counts: Record<string, number> = {};
       elements.forEach((e: ElementData) => {
@@ -244,8 +270,10 @@ export const api = {
     localStorage.setItem(KEYS.ELEMENTS, JSON.stringify(updated));
   },
   getMaintenanceHistory: async (elementId: string): Promise<MaintenanceRecord[]> => {
-    if (USE_BACKEND) return await fetchAPI(`/maintenance?elementId=${elementId}`) || [];
-
+    if (USE_BACKEND) {
+        const res = await fetchAPI(`/maintenance?elementId=${elementId}`);
+        return Array.isArray(res) ? res : [];
+    }
     const records = JSON.parse(localStorage.getItem(KEYS.MAINTENANCE) || '[]');
     return records.filter((r: MaintenanceRecord) => r.elementId === elementId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   },
@@ -264,8 +292,10 @@ export const api = {
     localStorage.setItem(KEYS.FAULTS, JSON.stringify(records));
   },
   getFaultHistory: async (elementId: string): Promise<FaultRecord[]> => {
-    if (USE_BACKEND) return await fetchAPI(`/faults?elementId=${elementId}`) || [];
-
+    if (USE_BACKEND) {
+        const res = await fetchAPI(`/faults?elementId=${elementId}`);
+        return Array.isArray(res) ? res : [];
+    }
     const records = JSON.parse(localStorage.getItem(KEYS.FAULTS) || '[]');
     return records.filter((r: FaultRecord) => r.elementId === elementId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   },
@@ -277,8 +307,10 @@ export const api = {
     localStorage.setItem(KEYS.FAULTS, JSON.stringify(records));
   },
   getDailyMaintenance: async (date: string, turn?: string) => {
-      if (USE_BACKEND) return await fetchAPI(`/reports/daily?date=${date}&turn=${turn}`) || [];
-
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/reports/daily?date=${date}&turn=${turn}`);
+          return Array.isArray(res) ? res : [];
+      }
       const records = JSON.parse(localStorage.getItem(KEYS.MAINTENANCE) || '[]');
       const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
       
@@ -291,8 +323,10 @@ export const api = {
       });
   },
   getMonthlyMaintenance: async (month: number, year: number) => {
-       if (USE_BACKEND) return await fetchAPI(`/reports/monthly?month=${month}&year=${year}`) || [];
-
+       if (USE_BACKEND) {
+           const res = await fetchAPI(`/reports/monthly?month=${month}&year=${year}`);
+           return Array.isArray(res) ? res : [];
+       }
        const records = JSON.parse(localStorage.getItem(KEYS.MAINTENANCE) || '[]');
        const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
        return records.filter((r: MaintenanceRecord) => {
@@ -318,7 +352,10 @@ export const api = {
       localStorage.setItem(KEYS.LISTS, JSON.stringify(lists));
   },
   getMonthlyList: async (month: number, year: number): Promise<MonthlyList | null> => {
-      if (USE_BACKEND) return await fetchAPI(`/lists?month=${month}&year=${year}`);
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/lists?month=${month}&year=${year}`);
+          return res && !res.error ? res : null;
+      }
 
       const lists = JSON.parse(localStorage.getItem(KEYS.LISTS) || '[]');
       const list = lists.find((l: MonthlyList) => l.month === month && l.year === year);
@@ -337,7 +374,10 @@ export const api = {
       return null;
   },
   getSemesterStats: async (semester: 1 | 2, year: number) => {
-      if (USE_BACKEND) return await fetchAPI(`/stats?semester=${semester}&year=${year}`);
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/stats?semester=${semester}&year=${year}`);
+          return res && !res.error ? res : {};
+      }
 
       const lists = JSON.parse(localStorage.getItem(KEYS.LISTS) || '[]');
       const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
@@ -366,7 +406,10 @@ export const api = {
 
   // ROSTER METHODS
   getRoster: async (sectorId: string, month: number, year: number): Promise<Roster | null> => {
-      if (USE_BACKEND) return await fetchAPI(`/roster?sectorId=${sectorId}&month=${month}&year=${year}`);
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/roster?sectorId=${sectorId}&month=${month}&year=${year}`);
+          return res && !res.error ? res : null;
+      }
 
       const rosters = JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
       const roster = rosters.find((r: Roster) => r.sectorId === sectorId && r.month === month && r.year === year);
@@ -381,7 +424,10 @@ export const api = {
       localStorage.setItem(KEYS.ROSTER, JSON.stringify(rosters));
   },
   getRosterStats: async (sectorId: string, year: number): Promise<Record<string, Record<string, number>>> => {
-      if (USE_BACKEND) return await fetchAPI(`/roster/stats?sectorId=${sectorId}&year=${year}`);
+      if (USE_BACKEND) {
+          const res = await fetchAPI(`/roster/stats?sectorId=${sectorId}&year=${year}`);
+          return res && !res.error ? res : {};
+      }
 
       const rosters = JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
       const stats: Record<string, Record<string, number>> = {};

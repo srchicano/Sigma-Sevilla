@@ -44,6 +44,18 @@ app.post('/api/users/register', async (req, res) => {
     res.json(newUser);
 });
 
+app.post('/api/users/change-password', async (req, res) => {
+    const { userId, oldPassword, newPassword } = req.body;
+    const user = await User.findOne({ id: userId });
+    
+    if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    if (user.password !== oldPassword) return res.status(400).json({ success: false, message: 'Contraseña antigua incorrecta' });
+
+    user.password = newPassword;
+    await user.save();
+    res.json({ success: true });
+});
+
 app.get('/api/users/pending', async (req, res) => {
     const users = await User.find({ isApproved: false });
     res.json(users);
