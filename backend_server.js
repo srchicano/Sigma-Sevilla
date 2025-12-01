@@ -130,6 +130,11 @@ app.put('/api/elements/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+app.delete('/api/elements/:id', async (req, res) => {
+    await Element.findOneAndDelete({ id: req.params.id });
+    res.json({ success: true });
+});
+
 // MAINTENANCE
 app.post('/api/maintenance', async (req, res) => {
     const record = new Maintenance(req.body);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { SECTORS, STATIONS, INSTALLATION_TYPES } from './constants';
@@ -37,6 +38,9 @@ function App() {
   const [elementsList, setElementsList] = useState<any[]>([]);
   const [elementCounts, setElementCounts] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Sort State
+  const [sortOption, setSortOption] = useState<'ALPHA_ASC' | 'ALPHA_DESC' | 'PK_ASC' | 'PK_DESC'>('ALPHA_ASC');
   
   // Login Form
   const [loginData, setLoginData] = useState({ matricula: '', password: '' });
@@ -107,10 +111,28 @@ function App() {
     else if (view === 'ESTACIONES') { setView('SECTORS'); setNavState({}); }
   };
 
-  // Filter elements based on search
-  const filteredElements = elementsList.filter(el => 
-      el.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleDeleteElement = async (element: any) => {
+      if(confirm(`¿Estás seguro de que quieres eliminar el elemento ${element.name}?`)) {
+          await api.deleteElement(element.id);
+          loadElements();
+      }
+  };
+
+  // Filter and Sort elements based on search and sort option
+  const filteredElements = elementsList
+      .filter(el => el.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => {
+          if (sortOption === 'ALPHA_ASC') return a.name.localeCompare(b.name);
+          if (sortOption === 'ALPHA_DESC') return b.name.localeCompare(a.name);
+          
+          const pkA = parseFloat(a.data?.pk?.replace(',', '.') || '0');
+          const pkB = parseFloat(b.data?.pk?.replace(',', '.') || '0');
+          
+          if (sortOption === 'PK_ASC') return pkA - pkB;
+          if (sortOption === 'PK_DESC') return pkB - pkA;
+          
+          return 0;
+      });
   
   const [searchResults, setSearchResults] = useState<any[]>([]);
   useEffect(() => {
@@ -424,7 +446,7 @@ function App() {
             {/* ELEMENTS VIEW */}
             {view === 'ELEMENTOS' && (
                 <div className="container mx-auto px-4 py-8 flex flex-col gap-6 h-full overflow-y-auto">
-                     <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+                     <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm gap-4">
                         <div className="flex-1 max-w-lg relative">
                              <input 
                                 type="text" 
@@ -436,12 +458,25 @@ function App() {
                             <Search className="absolute left-3 top-2.5 text-gray-400" size={18}/>
                         </div>
 
-                        <button 
-                            onClick={() => { setSelectedElement(null); setShowAddElement(true); }}
-                            className="bg-[#006338] text-white px-6 py-2 rounded-lg shadow hover:bg-green-800 transition flex items-center gap-2 ml-4"
-                        >
-                            <span className="text-xl font-bold">+</span> Añadir Elemento
-                        </button>
+                        <div className="flex items-center gap-2">
+                             <select 
+                                className="border border-gray-200 rounded p-2 focus:ring-1 focus:ring-green-500"
+                                value={sortOption}
+                                onChange={(e: any) => setSortOption(e.target.value)}
+                             >
+                                 <option value="ALPHA_ASC">A-Z</option>
+                                 <option value="ALPHA_DESC">Z-A</option>
+                                 <option value="PK_ASC">PK Asc</option>
+                                 <option value="PK_DESC">PK Desc</option>
+                             </select>
+
+                            <button 
+                                onClick={() => { setSelectedElement(null); setShowAddElement(true); }}
+                                className="bg-[#006338] text-white px-6 py-2 rounded-lg shadow hover:bg-green-800 transition flex items-center gap-2"
+                            >
+                                <span className="text-xl font-bold">+</span> Añadir Elemento
+                            </button>
+                        </div>
                      </div>
 
                      <div className="space-y-4 pb-12">
@@ -457,6 +492,7 @@ function App() {
                                     onUpdate={() => { loadElements(); }}
                                     onOpenFaults={(el) => { setSelectedElement(el); setShowFault(true); }}
                                     onOpenMaintenance={(el) => { setSelectedElement(el); setShowMaintenance(true); }}
+                                    onDelete={handleDeleteElement}
                                     isAdminOrSupervisor={user.role !== UserRole.AGENT}
                                 />
                             ))

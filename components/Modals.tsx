@@ -820,7 +820,6 @@ export const RosterModal = ({ isOpen, onClose, sectorId, agents }: any) => {
 };
 
 // --- ELEMENT FORM MODAL (ADD / MAINTENANCE) ---
-// Extracted to separate function to prevent focus loss
 const FormField = ({ label, value, onChange, placeholder = '' }: any) => (
     <div className="mb-2">
         <label className="block text-xs font-bold text-gray-700 mb-1">{label}</label>
@@ -829,6 +828,19 @@ const FormField = ({ label, value, onChange, placeholder = '' }: any) => (
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
+        />
+    </div>
+);
+
+// Helper for checkboxes in form
+const FormCheckbox = ({ label, checked, onChange }: any) => (
+    <div className="mb-2 flex items-center justify-between">
+        <label className="block text-xs font-bold text-gray-700">{label}</label>
+        <input 
+            type="checkbox"
+            className="w-5 h-5 text-green-600 rounded focus:ring-green-600"
+            checked={!!checked}
+            onChange={(e) => onChange(e.target.checked)}
         />
     </div>
 );
@@ -853,7 +865,7 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
         }
     }, [isOpen, existingElement]);
 
-    const handleDataChange = (path: string, value: string) => {
+    const handleDataChange = (path: string, value: any) => {
         const keys = path.split('.');
         const newData = { ...data };
         let current: any = newData;
@@ -921,6 +933,17 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                         />
                     </div>
                     
+                    {/* PK Field - New */}
+                    <div className="mb-4">
+                        <label className="block font-bold text-gray-700">Punto Kilométrico (PK)</label>
+                        <input 
+                            className="w-full border p-2 rounded bg-gray-50 focus:ring-1 focus:ring-green-600 focus:outline-none"
+                            value={getValue('pk')}
+                            onChange={(e) => handleDataChange('pk', e.target.value)}
+                            placeholder="Ej: 10.500"
+                        />
+                    </div>
+
                     {/* Date and Turno Selector only for Maintenance */}
                     {isMaintenance && (
                         <div className="flex gap-4 mb-4">
@@ -1004,7 +1027,136 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
                             </div>
                         )}
                         
-                        {![InstallationType.CIRCUITOS, InstallationType.MOTORES].includes(type) && (
+                        {type === InstallationType.SENALES && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* FOCOS */}
+                                <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                                    <h5 className="font-bold text-blue-800 text-sm mb-2 bg-blue-200 p-1 rounded text-center">FOCOS</h5>
+                                    <div className="mb-2">
+                                        <label className="block text-xs font-bold text-blue-900 mb-1">TIPO</label>
+                                        <select 
+                                            value={getValue('focos.tipo')} 
+                                            onChange={e => handleDataChange('focos.tipo', e.target.value)}
+                                            className="w-full border rounded p-1 text-sm"
+                                        >
+                                            <option value="">Seleccione...</option>
+                                            <option value="Modular">Modular</option>
+                                            <option value="Ind. Normal">Ind. Normal</option>
+                                            <option value="LED">LED</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-red-100 p-1 rounded">
+                                            <h6 className="text-[10px] font-bold text-red-800">ROJO</h6>
+                                            <FormField label="Ve" value={getValue('focos.rojo.ve')} onChange={(v: string) => handleDataChange('focos.rojo.ve', v)} />
+                                            <FormField label="Vlamp" value={getValue('focos.rojo.vlamp')} onChange={(v: string) => handleDataChange('focos.rojo.vlamp', v)} />
+                                        </div>
+                                        <div className="bg-gray-200 p-1 rounded">
+                                            <h6 className="text-[10px] font-bold text-gray-700">BLANCO</h6>
+                                            <FormField label="Ve" value={getValue('focos.blanco.ve')} onChange={(v: string) => handleDataChange('focos.blanco.ve', v)} />
+                                            <FormField label="Vlamp" value={getValue('focos.blanco.vlamp')} onChange={(v: string) => handleDataChange('focos.blanco.vlamp', v)} />
+                                        </div>
+                                        <div className="bg-green-100 p-1 rounded">
+                                            <h6 className="text-[10px] font-bold text-green-800">VERDE</h6>
+                                            <FormField label="Ve" value={getValue('focos.verde.ve')} onChange={(v: string) => handleDataChange('focos.verde.ve', v)} />
+                                            <FormField label="Vlamp" value={getValue('focos.verde.vlamp')} onChange={(v: string) => handleDataChange('focos.verde.vlamp', v)} />
+                                        </div>
+                                        <div className="bg-yellow-100 p-1 rounded">
+                                            <h6 className="text-[10px] font-bold text-yellow-800">AMARILLO</h6>
+                                            <FormField label="Ve" value={getValue('focos.amarillo.ve')} onChange={(v: string) => handleDataChange('focos.amarillo.ve', v)} />
+                                            <FormField label="Vlamp" value={getValue('focos.amarillo.vlamp')} onChange={(v: string) => handleDataChange('focos.amarillo.vlamp', v)} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* UC */}
+                                <div className="bg-green-50 p-3 rounded border border-green-800">
+                                    <h5 className="font-bold text-white text-sm mb-2 bg-[#004d2c] p-1 rounded text-center">UNIDAD DE CONEXIÓN</h5>
+                                    {/* UC Input is generic here, ElementCard has the dropdown for display/edit inline */}
+                                    <div className="mb-2">
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">UC</label>
+                                        <select 
+                                            value={getValue('uc.uc')} 
+                                            onChange={e => handleDataChange('uc.uc', e.target.value)}
+                                            className="w-full border rounded p-1 text-sm"
+                                        >
+                                            <option value="">Seleccione...</option>
+                                            <option value="UCS">UCS</option>
+                                            <option value="UCD">UCD</option>
+                                            <option value="UCT">UCT</option>
+                                        </select>
+                                    </div>
+                                    <div className="mt-2 bg-green-100 p-2 rounded">
+                                        <h6 className="text-xs font-bold text-green-900 mb-1">SALIDA VERDE</h6>
+                                        <FormField label="TSB" value={getValue('uc.verde.tsb')} onChange={(v: string) => handleDataChange('uc.verde.tsb', v)} />
+                                        <FormField label="CompAlt" value={getValue('uc.verde.compAlt')} onChange={(v: string) => handleDataChange('uc.verde.compAlt', v)} />
+                                        <FormField label="Baliza" value={getValue('uc.verde.baliza')} onChange={(v: string) => handleDataChange('uc.verde.baliza', v)} />
+                                        <FormCheckbox label="Reparto" checked={getValue('uc.verde.reparto')} onChange={(v: boolean) => handleDataChange('uc.verde.reparto', v)} />
+                                    </div>
+                                    <div className="mt-2 bg-green-100 p-2 rounded">
+                                        <h6 className="text-xs font-bold text-green-900 mb-1">SALIDA AMARILLO</h6>
+                                        <FormField label="TSB" value={getValue('uc.amarillo.tsb')} onChange={(v: string) => handleDataChange('uc.amarillo.tsb', v)} />
+                                        <FormField label="CompAlt" value={getValue('uc.amarillo.compAlt')} onChange={(v: string) => handleDataChange('uc.amarillo.compAlt', v)} />
+                                        <FormField label="Baliza" value={getValue('uc.amarillo.baliza')} onChange={(v: string) => handleDataChange('uc.amarillo.baliza', v)} />
+                                        <FormCheckbox label="Reparto" checked={getValue('uc.amarillo.reparto')} onChange={(v: boolean) => handleDataChange('uc.amarillo.reparto', v)} />
+                                    </div>
+                                </div>
+
+                                {/* BALIZA PIE SEÑAL */}
+                                <div className="bg-orange-50 p-3 rounded border border-orange-700">
+                                    <h5 className="font-bold text-white text-sm mb-2 bg-orange-700 p-1 rounded text-center">BALIZA PIE SEÑAL</h5>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div><h6 className="text-[10px] font-bold">L8</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPie.l8.desvF')} onChange={(v: string) => handleDataChange('balizaPie.l8.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPie.l8.desvP')} onChange={(v: string) => handleDataChange('balizaPie.l8.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPie.l8.altura')} onChange={(v: string) => handleDataChange('balizaPie.l8.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">L3</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPie.l3.desvF')} onChange={(v: string) => handleDataChange('balizaPie.l3.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPie.l3.desvP')} onChange={(v: string) => handleDataChange('balizaPie.l3.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPie.l3.altura')} onChange={(v: string) => handleDataChange('balizaPie.l3.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">L1</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPie.l1.desvF')} onChange={(v: string) => handleDataChange('balizaPie.l1.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPie.l1.desvP')} onChange={(v: string) => handleDataChange('balizaPie.l1.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPie.l1.altura')} onChange={(v: string) => handleDataChange('balizaPie.l1.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">Carril</h6>
+                                            <FormField label="Dist" value={getValue('balizaPie.carril.dist')} onChange={(v: string) => handleDataChange('balizaPie.carril.dist', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPie.carril.altura')} onChange={(v: string) => handleDataChange('balizaPie.carril.altura', v)} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* BALIZA PREVIA */}
+                                <div className="bg-purple-50 p-3 rounded border border-purple-800">
+                                    <h5 className="font-bold text-white text-sm mb-2 bg-purple-900 p-1 rounded text-center">BALIZA PREVIA</h5>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div><h6 className="text-[10px] font-bold">L7</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPrevia.l7.desvF')} onChange={(v: string) => handleDataChange('balizaPrevia.l7.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPrevia.l7.desvP')} onChange={(v: string) => handleDataChange('balizaPrevia.l7.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPrevia.l7.altura')} onChange={(v: string) => handleDataChange('balizaPrevia.l7.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">L3</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPrevia.l3.desvF')} onChange={(v: string) => handleDataChange('balizaPrevia.l3.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPrevia.l3.desvP')} onChange={(v: string) => handleDataChange('balizaPrevia.l3.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPrevia.l3.altura')} onChange={(v: string) => handleDataChange('balizaPrevia.l3.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">L1</h6>
+                                            <FormField label="Desv F" value={getValue('balizaPrevia.l1.desvF')} onChange={(v: string) => handleDataChange('balizaPrevia.l1.desvF', v)} />
+                                            <FormField label="Desv %" value={getValue('balizaPrevia.l1.desvP')} onChange={(v: string) => handleDataChange('balizaPrevia.l1.desvP', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPrevia.l1.altura')} onChange={(v: string) => handleDataChange('balizaPrevia.l1.altura', v)} />
+                                        </div>
+                                        <div><h6 className="text-[10px] font-bold">Carril</h6>
+                                            <FormField label="Dist" value={getValue('balizaPrevia.carril.dist')} onChange={(v: string) => handleDataChange('balizaPrevia.carril.dist', v)} />
+                                            <FormField label="Altura" value={getValue('balizaPrevia.carril.altura')} onChange={(v: string) => handleDataChange('balizaPrevia.carril.altura', v)} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {![InstallationType.CIRCUITOS, InstallationType.MOTORES, InstallationType.SENALES].includes(type) && (
                             <p className="text-gray-500 italic text-sm">Formulario genérico. Añada datos adicionales en un futuro.</p>
                         )}
                     </div>
@@ -1021,83 +1173,96 @@ export const ElementFormModal = ({ isOpen, onClose, type, stationId, existingEle
 
 // --- FAULT FORM MODAL ---
 export const FaultFormModal = ({ isOpen, onClose, element, onSubmit }: any) => {
-    const [formData, setFormData] = useState({
-        date: new Date().toISOString().split('T')[0],
-        agents: '',
-        description: '',
-        inicio: '', llegada: '', solAutTrabajos: '', concesion: '', enServicio: '', finTrabajos: '', salida: '', llegadaDest: '',
-        causes: '',
-        repair: ''
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [description, setDescription] = useState('');
+    const [agents, setAgents] = useState('');
+    const [times, setTimes] = useState({
+        inicio: '', llegada: '', solAutTrabajos: '', concesion: '',
+        enServicio: '', finTrabajos: '', salida: '', llegadaDest: ''
     });
+    const [causes, setCauses] = useState('');
+    const [repair, setRepair] = useState('');
 
-    if (!isOpen || !element) return null;
+    useEffect(() => {
+        if(isOpen) {
+            setDate(new Date().toISOString().split('T')[0]);
+            setDescription('');
+            setAgents('');
+            setTimes({ inicio: '', llegada: '', solAutTrabajos: '', concesion: '', enServicio: '', finTrabajos: '', salida: '', llegadaDest: '' });
+            setCauses('');
+            setRepair('');
+        }
+    }, [isOpen]);
 
-    const handleChange = (field: string, value: string) => {
-        setFormData({ ...formData, [field]: value });
-    };
-
-    const handleSave = async () => {
-        await api.addFault({
+    const handleSubmit = async () => {
+        if (!element) return;
+        
+        const record: FaultRecord = {
             id: Date.now().toString(),
             elementId: element.id,
-            date: formData.date,
-            stationName: element.stationId,
-            agents: formData.agents.split(','),
-            description: formData.description,
-            times: {
-                inicio: formData.inicio, llegada: formData.llegada, solAutTrabajos: formData.solAutTrabajos,
-                concesion: formData.concesion, enServicio: formData.enServicio, finTrabajos: formData.finTrabajos,
-                salida: formData.salida, llegadaDest: formData.llegadaDest
-            },
-            causes: formData.causes,
-            repair: formData.repair
-        });
+            date,
+            stationName: STATIONS.find(s => s.id === element.stationId)?.name || '',
+            agents: agents.split(',').map(a => a.trim()).filter(a => a),
+            description,
+            times,
+            causes,
+            repair
+        };
+        await api.addFault(record);
         onSubmit();
         onClose();
     };
 
+    if (!isOpen) return null;
+
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-                <div className="bg-red-600 p-4 text-white flex justify-between">
-                    <h3 className="font-bold">Informe de Avería - {element.name}</h3>
+            <div className="bg-white rounded-lg w-[90vw] max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                 <div className="bg-red-600 p-4 text-white flex justify-between">
+                    <h3 className="font-bold">Nueva Avería - {element?.name}</h3>
                     <button onClick={onClose}><X /></button>
                 </div>
-                
                 <div className="p-6 overflow-y-auto flex-1 space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div><label className="block text-xs font-bold mb-1">Fecha</label><input type="date" className="w-full border p-2 rounded" value={formData.date} onChange={e => handleChange('date', e.target.value)} /></div>
-                        <div><label className="block text-xs font-bold mb-1">Estación</label><input disabled className="w-full border p-2 rounded bg-gray-100" value={element.stationId} /></div>
-                        <div><label className="block text-xs font-bold mb-1">Agentes</label><input className="w-full border p-2 rounded" placeholder="Separados por coma" value={formData.agents} onChange={e => handleChange('agents', e.target.value)} /></div>
+                    <div className="flex gap-4">
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-700">Fecha</label>
+                            <input type="date" className="w-full border p-2 rounded" value={date} onChange={e => setDate(e.target.value)} />
+                        </div>
+                         <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-700">Agentes (separados por coma)</label>
+                            <input className="w-full border p-2 rounded" value={agents} onChange={e => setAgents(e.target.value)} placeholder="Ej: Chicano, Pérez" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-700">Descripción</label>
+                        <textarea className="w-full border p-2 rounded h-20" value={description} onChange={e => setDescription(e.target.value)} />
                     </div>
                     
-                    <div>
-                        <label className="block text-xs font-bold mb-1">Descripción</label>
-                        <textarea className="w-full border p-2 rounded h-20" value={formData.description} onChange={e => handleChange('description', e.target.value)} />
-                    </div>
-
-                    <div className="border-t pt-4">
-                        <h4 className="font-bold text-gray-700 mb-2">Horarios</h4>
-                        <div className="grid grid-cols-4 gap-4">
-                            <div><label className="block text-xs text-gray-500">Inicio</label><input type="time" className="w-full border p-1 rounded" value={formData.inicio} onChange={e => handleChange('inicio', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Llegada</label><input type="time" className="w-full border p-1 rounded" value={formData.llegada} onChange={e => handleChange('llegada', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Sol. Aut.</label><input type="time" className="w-full border p-1 rounded" value={formData.solAutTrabajos} onChange={e => handleChange('solAutTrabajos', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Concesión</label><input type="time" className="w-full border p-1 rounded" value={formData.concesion} onChange={e => handleChange('concesion', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">En Servicio</label><input type="time" className="w-full border p-1 rounded" value={formData.enServicio} onChange={e => handleChange('enServicio', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Fin Trabajos</label><input type="time" className="w-full border p-1 rounded" value={formData.finTrabajos} onChange={e => handleChange('finTrabajos', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Salida</label><input type="time" className="w-full border p-1 rounded" value={formData.salida} onChange={e => handleChange('salida', e.target.value)} /></div>
-                            <div><label className="block text-xs text-gray-500">Llegada Dest.</label><input type="time" className="w-full border p-1 rounded" value={formData.llegadaDest} onChange={e => handleChange('llegadaDest', e.target.value)} /></div>
+                    <div className="bg-gray-50 p-3 rounded border">
+                        <h4 className="font-bold text-sm mb-2 text-gray-600">Cronología</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {Object.keys(times).map((key) => (
+                                <div key={key}>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase">{key}</label>
+                                    <input type="time" className="w-full border p-1 text-sm rounded bg-white" value={(times as any)[key]} onChange={e => setTimes({...times, [key]: e.target.value})} />
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div><label className="block text-xs font-bold mb-1">Causas</label><textarea className="w-full border p-2 rounded h-24" value={formData.causes} onChange={e => handleChange('causes', e.target.value)} /></div>
-                        <div><label className="block text-xs font-bold mb-1">Reparación</label><textarea className="w-full border p-2 rounded h-24" value={formData.repair} onChange={e => handleChange('repair', e.target.value)} /></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700">Causas</label>
+                            <textarea className="w-full border p-2 rounded h-24" value={causes} onChange={e => setCauses(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700">Reparación</label>
+                            <textarea className="w-full border p-2 rounded h-24" value={repair} onChange={e => setRepair(e.target.value)} />
+                        </div>
                     </div>
                 </div>
-
-                <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
-                    <button onClick={handleSave} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">Guardar</button>
+                <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">
+                    <button onClick={handleSubmit} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 flex items-center gap-2"><Save size={16}/> Guardar</button>
                     <button onClick={onClose} className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400">Cancelar</button>
                 </div>
             </div>
@@ -1105,33 +1270,44 @@ export const FaultFormModal = ({ isOpen, onClose, element, onSubmit }: any) => {
     );
 };
 
-// --- FAULT HISTORY MODAL ---
-export const FaultHistoryModal = ({ isOpen, onClose, elements }: any) => {
-    const [selectedElementId, setSelectedElementId] = useState('');
-    const [faults, setFaults] = useState<FaultRecord[]>([]);
-    const [selectedFault, setSelectedFault] = useState<FaultRecord | null>(null);
+// --- GENERIC HISTORY MODAL ---
+const HistoryModal = ({ isOpen, onClose, title, elements, type }: any) => {
+    const [selectedId, setSelectedId] = useState('');
+    const [history, setHistory] = useState<any[]>([]);
 
     useEffect(() => {
-        if(isOpen && elements.length > 0 && !selectedElementId) {
-            setSelectedElementId(elements[0].id);
+        if (isOpen && elements.length > 0) {
+             // If selectedId is invalid or empty, default to first element
+             if (!selectedId || !elements.find((e: any) => e.id === selectedId)) {
+                setSelectedId(elements[0].id);
+             }
         }
-    }, [isOpen, elements]);
-
-    const loadFaults = () => {
-        if(selectedElementId) {
-            api.getFaultHistory(selectedElementId).then(setFaults);
-            setSelectedFault(null);
-        }
-    };
+    }, [isOpen, elements, selectedId]);
 
     useEffect(() => {
-        loadFaults();
-    }, [selectedElementId]);
-
+        const fetchHistory = async () => {
+            if (selectedId) {
+                const data = type === 'maintenance' 
+                    ? await api.getMaintenanceHistory(selectedId)
+                    : await api.getFaultHistory(selectedId);
+                setHistory(data);
+            } else {
+                setHistory([]);
+            }
+        };
+        fetchHistory();
+    }, [selectedId, type, isOpen]);
+    
     const handleDelete = async (id: string) => {
-        if(confirm('¿Eliminar registro de avería?')) {
-            await api.deleteFault(id);
-            loadFaults();
+        if(confirm('¿Eliminar registro permanentemente?')) {
+             if (type === 'maintenance') await api.deleteMaintenance(id);
+             else await api.deleteFault(id);
+             
+             // Refresh
+             const data = type === 'maintenance' 
+                    ? await api.getMaintenanceHistory(selectedId)
+                    : await api.getFaultHistory(selectedId);
+             setHistory(data);
         }
     };
 
@@ -1139,255 +1315,77 @@ export const FaultHistoryModal = ({ isOpen, onClose, elements }: any) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-                <div className="bg-red-600 p-4 text-white flex justify-between">
-                    <h3 className="font-bold">Histórico de datos de avería</h3>
+             <div className="bg-white rounded-lg w-[95vw] max-w-4xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+                <div className={`p-4 text-white flex justify-between items-center ${type === 'maintenance' ? 'bg-[#006338]' : 'bg-red-600'}`}>
+                    <h3 className="font-bold">{title}</h3>
                     <button onClick={onClose}><X /></button>
                 </div>
-                <div className="flex flex-1 overflow-hidden">
-                    {/* LEFT PANEL */}
-                    <div className="w-1/3 bg-gray-50 border-r p-4 flex flex-col">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Seleccionar Elemento</label>
-                        <select className="w-full p-2 border rounded mb-4" value={selectedElementId} onChange={e => setSelectedElementId(e.target.value)}>
-                            {elements.map((el: ElementData) => (
-                                <option key={el.id} value={el.id}>{el.name}</option>
-                            ))}
-                        </select>
-                        <div className="flex-1 overflow-y-auto space-y-2">
-                            {faults.length === 0 && <p className="text-gray-400 text-sm text-center">No hay averías registradas.</p>}
-                            {faults.map(f => (
-                                <div key={f.id} className="relative group">
-                                    <button 
-                                        onClick={() => setSelectedFault(f)}
-                                        className={`w-full text-left p-3 rounded border transition pr-8 ${selectedFault?.id === f.id ? 'bg-red-100 border-red-500' : 'bg-white hover:bg-gray-100'}`}
-                                    >
-                                        <div className="font-bold text-gray-800">{f.date}</div>
-                                        <div className="text-xs text-gray-500 truncate">{f.description}</div>
-                                    </button>
-                                    <button 
-                                        onClick={(e) => {e.stopPropagation(); handleDelete(f.id)}}
-                                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
-                                        title="Eliminar registro"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    {/* RIGHT PANEL */}
-                    <div className="w-2/3 p-6 overflow-y-auto">
-                        {!selectedFault ? (
-                            <div className="h-full flex items-center justify-center text-gray-400">Seleccione una avería para ver detalles.</div>
-                        ) : (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="block text-xs font-bold text-gray-500">Fecha</label><div className="font-medium">{selectedFault.date}</div></div>
-                                    <div><label className="block text-xs font-bold text-gray-500">Estación</label><div className="font-medium">{selectedFault.stationName}</div></div>
-                                    <div className="col-span-2"><label className="block text-xs font-bold text-gray-500">Agentes</label><div className="font-medium">{selectedFault.agents.join(', ')}</div></div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1">Descripción</label>
-                                    <div className="bg-gray-50 p-3 rounded border text-sm">{selectedFault.description}</div>
-                                </div>
-                                <div className="border-t pt-4">
-                                    <h4 className="font-bold text-gray-800 mb-3 text-sm uppercase">Horarios</h4>
-                                    <div className="grid grid-cols-2 gap-y-2 gap-x-8 text-sm">
-                                        <div className="flex justify-between border-b pb-1"><span>Inicio:</span> <span>{selectedFault.times.inicio || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>En Servicio:</span> <span>{selectedFault.times.enServicio || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Llegada:</span> <span>{selectedFault.times.llegada || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Fin Trabajos:</span> <span>{selectedFault.times.finTrabajos || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Sol. Aut.:</span> <span>{selectedFault.times.solAutTrabajos || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Salida:</span> <span>{selectedFault.times.salida || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Concesión:</span> <span>{selectedFault.times.concesion || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1"><span>Llegada Dest.:</span> <span>{selectedFault.times.llegadaDest || '-'}</span></div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Causas</label>
-                                        <div className="bg-gray-50 p-3 rounded border text-sm min-h-[60px]">{selectedFault.causes}</div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Reparación</label>
-                                        <div className="bg-gray-50 p-3 rounded border text-sm min-h-[60px]">{selectedFault.repair}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                <div className="p-4 border-b bg-gray-50 flex items-center gap-2">
+                    <label className="font-bold text-sm text-gray-700">Seleccionar Elemento:</label>
+                    <select 
+                        className="border p-2 rounded flex-1 max-w-md bg-white shadow-sm" 
+                        value={selectedId} 
+                        onChange={e => setSelectedId(e.target.value)}
+                    >
+                        {elements.map((el: any) => <option key={el.id} value={el.id}>{el.name}</option>)}
+                    </select>
+                </div>
+                <div className="flex-1 overflow-auto p-4 bg-gray-50">
+                    <div className="bg-white rounded shadow overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-100 text-gray-700 border-b">
+                                <tr>
+                                    <th className="p-3 w-32">Fecha</th>
+                                    <th className="p-3 w-40">Agentes</th>
+                                    <th className="p-3">Detalles</th>
+                                    <th className="p-3 w-16 text-right"></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {history.length === 0 ? 
+                                    <tr><td colSpan={4} className="p-8 text-center text-gray-400 italic">No hay registros para este elemento</td></tr> 
+                                : 
+                                    history.map((item: any) => (
+                                        <tr key={item.id} className="hover:bg-gray-50 transition">
+                                            <td className="p-3 align-top">
+                                                <div className="font-bold">{item.date}</div>
+                                                {type === 'maintenance' && <div className="text-xs text-gray-500 uppercase">{item.turn}</div>}
+                                            </td>
+                                            <td className="p-3 align-top text-gray-600">{item.agents.join(', ')}</td>
+                                            <td className="p-3 align-top">
+                                                {type === 'maintenance' 
+                                                    ? <div className="text-xs grid grid-cols-2 gap-x-4 gap-y-1">
+                                                        {Object.entries(item.dataSnapshot || {}).map(([k,v]) => {
+                                                            if (typeof v === 'object') return null; // Skip nested objects for summary
+                                                            return <div key={k}><span className="font-semibold text-gray-500">{k}:</span> {String(v)}</div>
+                                                        })}
+                                                      </div>
+                                                    : <div className="space-y-1">
+                                                        <p className="font-medium text-gray-900">{item.description}</p>
+                                                        {item.causes && <p className="text-xs text-gray-600"><span className="font-bold">Causa:</span> {item.causes}</p>}
+                                                        {item.repair && <p className="text-xs text-gray-600"><span className="font-bold">Reparación:</span> {item.repair}</p>}
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            {Object.entries(item.times || {}).map(([k,v]) => (
+                                                                v ? <span key={k} className="text-[10px] bg-gray-100 px-1 rounded border border-gray-200 uppercase">{k}: {String(v)}</span> : null
+                                                            ))}
+                                                        </div>
+                                                      </div>
+                                                }
+                                            </td>
+                                            <td className="p-3 align-top text-right">
+                                                <button onClick={() => handleDelete(item.id)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded transition"><Trash2 size={16}/></button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
+             </div>
         </div>
     );
 };
 
-// --- MAINTENANCE HISTORY MODAL ---
-export const MaintenanceHistoryModal = ({ isOpen, onClose, elements }: any) => {
-    const [selectedElementId, setSelectedElementId] = useState('');
-    const [records, setRecords] = useState<MaintenanceRecord[]>([]);
-    const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
-    const [selectedElementObj, setSelectedElementObj] = useState<ElementData | null>(null);
-
-    useEffect(() => {
-        if(isOpen && elements.length > 0 && !selectedElementId) {
-            setSelectedElementId(elements[0].id);
-        }
-    }, [isOpen, elements]);
-
-    const loadRecords = () => {
-        if(selectedElementId) {
-            api.getMaintenanceHistory(selectedElementId).then(setRecords);
-            setSelectedRecord(null);
-            setSelectedElementObj(elements.find((e: any) => e.id === selectedElementId));
-        }
-    };
-
-    useEffect(() => {
-        loadRecords();
-    }, [selectedElementId, elements]);
-
-    const handleDelete = async (id: string) => {
-        if(confirm('¿Eliminar registro de mantenimiento?')) {
-            await api.deleteMaintenance(id);
-            loadRecords();
-        }
-    };
-
-    // Helpers to render detailed data (similar to ElementCard)
-    const renderVal = (data: any, path: string, unit: string = '') => {
-        const keys = path.split('.');
-        let val = data;
-        for (const k of keys) val = val?.[k];
-        return val ? `${val} ${unit}` : '-';
-    };
-
-    const renderDetails = () => {
-        if (!selectedRecord || !selectedElementObj) return null;
-        const d = selectedRecord.dataSnapshot;
-        const type = selectedElementObj.installationType;
-
-        if (type === InstallationType.CIRCUITOS) {
-            return (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="p-3 bg-orange-50 rounded border border-orange-100">
-                        <h5 className="font-bold text-orange-800 mb-2">Filtro</h5>
-                        <p>3/4: <span className="font-mono">{renderVal(d, 'filtro', 'V')}</span></p>
-                    </div>
-                    <div className="p-3 bg-blue-50 rounded border border-blue-100">
-                        <h5 className="font-bold text-blue-800 mb-2">Receptores</h5>
-                        <p>I1/2 ⊕1: <span className="font-mono">{renderVal(d, 'receptores.i1', 'V')}</span></p>
-                        <p>I1/2 ⊕2: <span className="font-mono">{renderVal(d, 'receptores.i2', 'V')}</span></p>
-                        <p>I1/2 ⊕3: <span className="font-mono">{renderVal(d, 'receptores.i3', 'V')}</span></p>
-                    </div>
-                    <div className="p-3 bg-green-50 rounded border border-green-100">
-                        <h5 className="font-bold text-green-800 mb-2">Relés</h5>
-                        <p>I5/II8 ⊕1: <span className="font-mono">{renderVal(d, 'reles.i1', 'V')}</span></p>
-                        <p>I5/II8 ⊕2: <span className="font-mono">{renderVal(d, 'reles.i2', 'V')}</span></p>
-                        <p>I5/II8 ⊕3: <span className="font-mono">{renderVal(d, 'reles.i3', 'V')}</span></p>
-                    </div>
-                    <div className="p-3 bg-red-50 rounded border border-red-100">
-                        <h5 className="font-bold text-red-800 mb-2">Colaterales</h5>
-                        <p>Col 1: <span className="font-mono">{renderVal(d, 'colaterales.c1', 'V')}</span></p>
-                        <p>Col 2: <span className="font-mono">{renderVal(d, 'colaterales.c2', 'V')}</span></p>
-                        <p>Col 3: <span className="font-mono">{renderVal(d, 'colaterales.c3', 'V')}</span></p>
-                        <p>Col Up: <span className="font-mono">{renderVal(d, 'colaterales.c4', 'V')}</span></p>
-                    </div>
-                    <div className="p-3 bg-purple-50 rounded border border-purple-100">
-                        <h5 className="font-bold text-purple-800 mb-2">Shunt</h5>
-                        <p>ASU: <span className="font-mono">{renderVal(d, 'shunt.asu', 'V')}</span></p>
-                        <p>Parásitas: <span className="font-mono">{renderVal(d, 'shunt.parasitas', 'V')}</span></p>
-                    </div>
-                </div>
-            );
-        } else if (type === InstallationType.MOTORES) {
-            return (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-green-50 p-3 rounded border border-green-200">
-                        <h5 className="font-bold text-green-800 mb-2">Mov. Normal</h5>
-                        <p>Tiempo + CG: {renderVal(d, 'normal.tcg', 'ms')}</p>
-                        <p>Tiempo + SG: {renderVal(d, 'normal.tsg', 'ms')}</p>
-                        <p>Int. + CG: {renderVal(d, 'normal.icg', 'A')}</p>
-                        <p>Int. + SG: {renderVal(d, 'normal.isg', 'A')}</p>
-                        <p>Tensión +: {renderVal(d, 'normal.v', 'V')}</p>
-                    </div>
-                    <div className="bg-red-50 p-3 rounded border border-red-200">
-                        <h5 className="font-bold text-red-800 mb-2">Mov. Invertido</h5>
-                        <p>Tiempo - CG: {renderVal(d, 'invertido.tcg', 'ms')}</p>
-                        <p>Tiempo - SG: {renderVal(d, 'invertido.tsg', 'ms')}</p>
-                        <p>Int. - CG: {renderVal(d, 'invertido.icg', 'A')}</p>
-                        <p>Int. - SG: {renderVal(d, 'invertido.isg', 'A')}</p>
-                        <p>Tensión -: {renderVal(d, 'invertido.v', 'V')}</p>
-                    </div>
-                </div>
-            );
-        }
-        return <p className="text-gray-500 italic mt-4">Detalles genéricos: {JSON.stringify(d)}</p>;
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-                <div className="bg-[#006338] p-4 text-white flex justify-between">
-                    <h3 className="font-bold">Histórico de datos de Mantenimiento</h3>
-                    <button onClick={onClose}><X /></button>
-                </div>
-                <div className="flex flex-1 overflow-hidden">
-                    {/* LEFT PANEL */}
-                    <div className="w-1/3 bg-gray-50 border-r p-4 flex flex-col">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Seleccionar Elemento</label>
-                        <select className="w-full p-2 border rounded mb-4" value={selectedElementId} onChange={e => setSelectedElementId(e.target.value)}>
-                            {elements.map((el: ElementData) => (
-                                <option key={el.id} value={el.id}>{el.name}</option>
-                            ))}
-                        </select>
-                        <div className="flex-1 overflow-y-auto space-y-2">
-                            {records.length === 0 && <p className="text-gray-400 text-sm text-center">No hay registros.</p>}
-                            {records.map(r => (
-                                <div key={r.id} className="relative group">
-                                    <button 
-                                        onClick={() => setSelectedRecord(r)}
-                                        className={`w-full text-left p-3 rounded border transition pr-8 ${selectedRecord?.id === r.id ? 'bg-green-100 border-green-500' : 'bg-white hover:bg-gray-100'}`}
-                                    >
-                                        <div className="font-bold text-gray-800">{r.date}</div>
-                                        <div className="text-xs text-gray-500">{r.agents.join(', ')}</div>
-                                    </button>
-                                    <button 
-                                        onClick={(e) => {e.stopPropagation(); handleDelete(r.id)}}
-                                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
-                                        title="Eliminar registro"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    {/* RIGHT PANEL */}
-                    <div className="w-2/3 p-6 overflow-y-auto">
-                        {!selectedRecord ? (
-                             <div className="h-full flex items-center justify-center text-gray-400">Seleccione un registro.</div>
-                        ) : (
-                            <div>
-                                <div className="flex justify-between items-start mb-6 border-b pb-4">
-                                    <div>
-                                        <h4 className="text-xl font-bold text-[#006338]">{selectedElementObj?.name}</h4>
-                                        <p className="text-sm text-gray-500">{selectedElementObj?.installationType}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-bold">{selectedRecord.date}</p>
-                                        <p className="text-sm font-semibold text-gray-600 mb-1">Turno: {selectedRecord.turn || 'N/A'}</p>
-                                        <p className="text-sm text-gray-600">Agentes: {selectedRecord.agents.join(', ')}</p>
-                                    </div>
-                                </div>
-                                {renderDetails()}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+export const MaintenanceHistoryModal = (props: any) => <HistoryModal {...props} title="Historial de Mantenimiento" type="maintenance" />;
+export const FaultHistoryModal = (props: any) => <HistoryModal {...props} title="Historial de Averías" type="faults" />;

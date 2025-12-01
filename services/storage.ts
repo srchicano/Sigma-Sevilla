@@ -1,4 +1,5 @@
 
+
 import { User, Agent, ElementData, MaintenanceRecord, FaultRecord, MonthlyList, UserRole, InstallationType, Roster } from '../types';
 
 // Mock Data Keys
@@ -48,6 +49,7 @@ const initData = () => {
         name: 'CV 1',
         isCompleted: false,
         data: {
+            pk: '10.500',
             frecuencia: '13.5 kHz',
             filtro: '56 V',
             receptores: { i1: '0.965 V', i2: '0.965 V', i3: '0.965 V' },
@@ -62,7 +64,7 @@ const initData = () => {
         installationType: InstallationType.MOTORES,
         name: 'AGUJA 1',
         isCompleted: true,
-        data: {}
+        data: { pk: '10.550' }
       }
     ];
     localStorage.setItem(KEYS.ELEMENTS, JSON.stringify(dummyElements));
@@ -217,6 +219,13 @@ export const api = {
     const elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
     const updated = elements.map((e: ElementData) => e.id === element.id ? element : e);
     localStorage.setItem(KEYS.ELEMENTS, JSON.stringify(updated));
+  },
+  deleteElement: async (id: string) => {
+    if (USE_BACKEND) return await fetchAPI(`/elements/${id}`, 'DELETE');
+
+    let elements = JSON.parse(localStorage.getItem(KEYS.ELEMENTS) || '[]');
+    elements = elements.filter((e: ElementData) => e.id !== id);
+    localStorage.setItem(KEYS.ELEMENTS, JSON.stringify(elements));
   },
   
   // Maintenance & Faults
