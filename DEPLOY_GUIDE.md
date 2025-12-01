@@ -19,58 +19,38 @@ Esta guía detalla cómo poner en producción la aplicación web Sigma-Sevilla u
 
 ## 2. Backend: Render
 
-1.  Crea un nuevo repositorio en GitHub (o GitLab) y sube los siguientes archivos **en la raíz**:
-    *   `backend_server.js` (Renómbralo a `index.js` en el repo).
-    *   `backend_models.js`
-    *   `package.json` con el siguiente contenido:
-        ```json
-        {
-          "name": "sigma-backend",
-          "version": "1.0.0",
-          "main": "index.js",
-          "scripts": {
-            "start": "node index.js"
-          },
-          "dependencies": {
-            "express": "^4.18.2",
-            "mongoose": "^7.0.3",
-            "cors": "^2.8.5",
-            "dotenv": "^16.0.3"
-          }
-        }
-        ```
+1.  Asegúrate de que tu repositorio en GitHub contiene el archivo `package.json` corregido (el que se incluye en este proyecto) y los archivos `backend_server.js` y `backend_models.js`.
 2.  Crea una cuenta en [Render](https://render.com/).
 3.  Pulsa **New +** y selecciona **Web Service**.
-4.  Conecta tu repositorio de GitHub.
+4.  Conecta tu repositorio de GitHub `Sigma-Sevilla`.
 5.  Configuración del servicio:
     *   **Environment**: Node
     *   **Build Command**: `npm install`
-    *   **Start Command**: `node index.js`
+    *   **Start Command**: `node backend_server.js`
 6.  En la sección **Environment Variables**, añade:
     *   Key: `MONGODB_URI`
     *   Value: (Tu cadena de conexión de MongoDB Atlas copiada en el paso 1).
 7.  Pulsa **Create Web Service**.
-8.  Espera a que termine el despliegue. Copia la **URL** que te asigna Render (ej: `https://sigma-backend.onrender.com`).
+8.  Espera a que termine el despliegue. Si dice "Live", copia la **URL** que te asigna Render (ej: `https://sigma-backend.onrender.com`).
 
 ---
 
 ## 3. Frontend: Netlify
 
-1.  Sube el código del Frontend (React) a un repositorio de GitHub **diferente** (o una carpeta distinta).
-2.  Crea una cuenta en [Netlify](https://www.netlify.com/).
-3.  Pulsa **Add new site** -> **Import from existing project**.
-4.  Conecta tu GitHub y selecciona el repositorio del frontend.
-5.  Configuración de Build:
+1.  Crea una cuenta en [Netlify](https://www.netlify.com/).
+2.  Pulsa **Add new site** -> **Import from existing project**.
+3.  Conecta tu GitHub y selecciona el mismo repositorio `Sigma-Sevilla`.
+4.  Configuración de Build:
     *   **Build command**: `npm run build`
     *   **Publish directory**: `dist`
-6.  Pulsa **Deploy site**.
-7.  Una vez creado, ve a **Site configuration** -> **Environment variables**.
-8.  Añade las siguientes variables para conectar con tu backend:
+5.  Pulsa **Deploy site**.
+6.  Una vez creado, ve a **Site configuration** -> **Environment variables**.
+7.  Añade las siguientes variables para conectar con tu backend:
     *   Key: `VITE_USE_BACKEND`
     *   Value: `true`
     *   Key: `VITE_API_URL`
-    *   Value: (La URL de tu backend en Render, sin la barra final, ej: `https://sigma-backend.onrender.com/api`)
-9.  Ve a la pestaña **Deploys** y pulsa **Trigger deploy** para reconstruir la web con las nuevas variables.
+    *   Value: (La URL de tu backend en Render que copiaste en el paso 2.8, seguida de `/api`. Ej: `https://sigma-backend.onrender.com/api`)
+8.  Ve a la pestaña **Deploys** y pulsa **Trigger deploy** para reconstruir la web con las nuevas variables.
 
 ---
 
@@ -78,19 +58,15 @@ Esta guía detalla cómo poner en producción la aplicación web Sigma-Sevilla u
 
 Para probar todo en tu ordenador:
 
-**Backend:**
-1. Crea una carpeta `backend`.
-2. Copia `backend_server.js` (como `index.js`) y `backend_models.js`.
-3. Ejecuta `npm init -y` y `npm install express mongoose cors dotenv`.
-4. Crea un archivo `.env` y pon: `MONGODB_URI=tu_cadena_mongo`.
-5. Ejecuta `node index.js`.
-
-**Frontend:**
-1. En la carpeta del proyecto React.
-2. Crea un archivo `.env.local`.
-3. Añade:
-   ```
-   VITE_USE_BACKEND=true
-   VITE_API_URL=http://localhost:3000/api
-   ```
-4. Ejecuta `npm run dev`.
+1.  Crea un archivo `.env` en la raíz con:
+    ```
+    MONGODB_URI=tu_cadena_mongo_real
+    ```
+2.  Crea un archivo `.env.local` en la raíz con:
+    ```
+    VITE_USE_BACKEND=true
+    VITE_API_URL=http://localhost:3000/api
+    ```
+3.  Abre dos terminales:
+    *   Terminal 1 (Backend): `node backend_server.js`
+    *   Terminal 2 (Frontend): `npm run dev`
