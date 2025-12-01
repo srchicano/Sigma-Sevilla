@@ -91,6 +91,11 @@ app.patch('/api/agents/:id/sector', async (req, res) => {
     res.json({ success: true });
 });
 
+app.delete('/api/agents/:id', async (req, res) => {
+    await Agent.findOneAndDelete({ id: req.params.id });
+    res.json({ success: true });
+});
+
 // ELEMENTS
 app.get('/api/elements', async (req, res) => {
     const { stationId, type } = req.query;
@@ -140,6 +145,11 @@ app.get('/api/maintenance', async (req, res) => {
     res.json(records);
 });
 
+app.delete('/api/maintenance/:id', async (req, res) => {
+    await Maintenance.findOneAndDelete({ id: req.params.id });
+    res.json({ success: true });
+});
+
 // FAULTS
 app.post('/api/faults', async (req, res) => {
     const record = new Fault(req.body);
@@ -151,6 +161,11 @@ app.get('/api/faults', async (req, res) => {
     const { elementId } = req.query;
     const records = await Fault.find({ elementId }).sort({ id: -1 });
     res.json(records);
+});
+
+app.delete('/api/faults/:id', async (req, res) => {
+    await Fault.findOneAndDelete({ id: req.params.id });
+    res.json({ success: true });
 });
 
 // REPORTS & LISTS

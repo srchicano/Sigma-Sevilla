@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Check, Trash2, Download, BarChart2, Save, Calendar, Clock, User, AlertTriangle, FileText, Grid } from 'lucide-react';
 import { Agent, Sector, User as UserType, UserRole, MonthlyList, InstallationType, ElementData, MaintenanceRecord, FaultRecord, Roster } from '../types';
@@ -36,6 +37,13 @@ export const AgentsModal = ({ isOpen, onClose, agents, sectors, onUpdate }: any)
       setNewAgentName('');
       setIsAdding(false);
       onUpdate();
+    }
+  };
+
+  const handleDeleteAgent = async (agentId: string) => {
+    if(confirm('¿Eliminar agente permanentemente?')) {
+        await api.deleteAgent(agentId);
+        onUpdate();
     }
   };
 
@@ -82,9 +90,16 @@ export const AgentsModal = ({ isOpen, onClose, agents, sectors, onUpdate }: any)
                   key={agent.id} 
                   draggable 
                   onDragStart={(e) => handleDragStart(e, agent.id)}
-                  className="bg-white p-3 rounded shadow cursor-move hover:shadow-md transition text-center font-medium text-gray-800 border-l-4 border-gray-400"
+                  className="bg-white p-3 rounded shadow cursor-move hover:shadow-md transition text-center font-medium text-gray-800 border-l-4 border-gray-400 relative group"
                 >
                   {agent.name}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteAgent(agent.id); }}
+                    className="absolute top-1 right-1 text-red-500 hover:bg-red-100 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Eliminar agente"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -105,9 +120,16 @@ export const AgentsModal = ({ isOpen, onClose, agents, sectors, onUpdate }: any)
                     key={agent.id} 
                     draggable 
                     onDragStart={(e) => handleDragStart(e, agent.id)}
-                    className="bg-white p-3 rounded shadow cursor-move hover:shadow-md transition text-center font-medium text-gray-800 border-l-4 border-[#006338]"
+                    className="bg-white p-3 rounded shadow cursor-move hover:shadow-md transition text-center font-medium text-gray-800 border-l-4 border-[#006338] relative group"
                   >
                     {agent.name}
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteAgent(agent.id); }}
+                        className="absolute top-1 right-1 text-red-500 hover:bg-red-100 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Eliminar agente"
+                    >
+                        <X size={12} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1095,12 +1117,23 @@ export const FaultHistoryModal = ({ isOpen, onClose, elements }: any) => {
         }
     }, [isOpen, elements]);
 
-    useEffect(() => {
+    const loadFaults = () => {
         if(selectedElementId) {
             api.getFaultHistory(selectedElementId).then(setFaults);
             setSelectedFault(null);
         }
+    };
+
+    useEffect(() => {
+        loadFaults();
     }, [selectedElementId]);
+
+    const handleDelete = async (id: string) => {
+        if(confirm('¿Eliminar registro de avería?')) {
+            await api.deleteFault(id);
+            loadFaults();
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -1123,14 +1156,22 @@ export const FaultHistoryModal = ({ isOpen, onClose, elements }: any) => {
                         <div className="flex-1 overflow-y-auto space-y-2">
                             {faults.length === 0 && <p className="text-gray-400 text-sm text-center">No hay averías registradas.</p>}
                             {faults.map(f => (
-                                <button 
-                                    key={f.id}
-                                    onClick={() => setSelectedFault(f)}
-                                    className={`w-full text-left p-3 rounded border transition ${selectedFault?.id === f.id ? 'bg-red-100 border-red-500' : 'bg-white hover:bg-gray-100'}`}
-                                >
-                                    <div className="font-bold text-gray-800">{f.date}</div>
-                                    <div className="text-xs text-gray-500 truncate">{f.description}</div>
-                                </button>
+                                <div key={f.id} className="relative group">
+                                    <button 
+                                        onClick={() => setSelectedFault(f)}
+                                        className={`w-full text-left p-3 rounded border transition pr-8 ${selectedFault?.id === f.id ? 'bg-red-100 border-red-500' : 'bg-white hover:bg-gray-100'}`}
+                                    >
+                                        <div className="font-bold text-gray-800">{f.date}</div>
+                                        <div className="text-xs text-gray-500 truncate">{f.description}</div>
+                                    </button>
+                                    <button 
+                                        onClick={(e) => {e.stopPropagation(); handleDelete(f.id)}}
+                                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+                                        title="Eliminar registro"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -1194,13 +1235,24 @@ export const MaintenanceHistoryModal = ({ isOpen, onClose, elements }: any) => {
         }
     }, [isOpen, elements]);
 
-    useEffect(() => {
+    const loadRecords = () => {
         if(selectedElementId) {
             api.getMaintenanceHistory(selectedElementId).then(setRecords);
             setSelectedRecord(null);
             setSelectedElementObj(elements.find((e: any) => e.id === selectedElementId));
         }
+    };
+
+    useEffect(() => {
+        loadRecords();
     }, [selectedElementId, elements]);
+
+    const handleDelete = async (id: string) => {
+        if(confirm('¿Eliminar registro de mantenimiento?')) {
+            await api.deleteMaintenance(id);
+            loadRecords();
+        }
+    };
 
     // Helpers to render detailed data (similar to ElementCard)
     const renderVal = (data: any, path: string, unit: string = '') => {
@@ -1294,14 +1346,22 @@ export const MaintenanceHistoryModal = ({ isOpen, onClose, elements }: any) => {
                         <div className="flex-1 overflow-y-auto space-y-2">
                             {records.length === 0 && <p className="text-gray-400 text-sm text-center">No hay registros.</p>}
                             {records.map(r => (
-                                <button 
-                                    key={r.id}
-                                    onClick={() => setSelectedRecord(r)}
-                                    className={`w-full text-left p-3 rounded border transition ${selectedRecord?.id === r.id ? 'bg-green-100 border-green-500' : 'bg-white hover:bg-gray-100'}`}
-                                >
-                                    <div className="font-bold text-gray-800">{r.date}</div>
-                                    <div className="text-xs text-gray-500">{r.agents.join(', ')}</div>
-                                </button>
+                                <div key={r.id} className="relative group">
+                                    <button 
+                                        onClick={() => setSelectedRecord(r)}
+                                        className={`w-full text-left p-3 rounded border transition pr-8 ${selectedRecord?.id === r.id ? 'bg-green-100 border-green-500' : 'bg-white hover:bg-gray-100'}`}
+                                    >
+                                        <div className="font-bold text-gray-800">{r.date}</div>
+                                        <div className="text-xs text-gray-500">{r.agents.join(', ')}</div>
+                                    </button>
+                                    <button 
+                                        onClick={(e) => {e.stopPropagation(); handleDelete(r.id)}}
+                                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+                                        title="Eliminar registro"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     </div>

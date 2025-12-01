@@ -1,3 +1,4 @@
+
 import { User, Agent, ElementData, MaintenanceRecord, FaultRecord, MonthlyList, UserRole, InstallationType, Roster } from '../types';
 
 // Mock Data Keys
@@ -176,6 +177,13 @@ export const api = {
     const updated = agents.map((a: Agent) => a.id === agentId ? { ...a, assignedSectorId: sectorId } : a);
     localStorage.setItem(KEYS.AGENTS, JSON.stringify(updated));
   },
+  deleteAgent: async (id: string) => {
+    if (USE_BACKEND) return await fetchAPI(`/agents/${id}`, 'DELETE');
+
+    let agents = JSON.parse(localStorage.getItem(KEYS.AGENTS) || '[]');
+    agents = agents.filter((a: Agent) => a.id !== id);
+    localStorage.setItem(KEYS.AGENTS, JSON.stringify(agents));
+  },
 
   // Elements
   getElements: async (stationId: string, type: InstallationType): Promise<ElementData[]> => {
@@ -232,6 +240,13 @@ export const api = {
     const records = JSON.parse(localStorage.getItem(KEYS.MAINTENANCE) || '[]');
     return records.filter((r: MaintenanceRecord) => r.elementId === elementId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   },
+  deleteMaintenance: async (id: string) => {
+    if (USE_BACKEND) return await fetchAPI(`/maintenance/${id}`, 'DELETE');
+
+    let records = JSON.parse(localStorage.getItem(KEYS.MAINTENANCE) || '[]');
+    records = records.filter((r: MaintenanceRecord) => r.id !== id);
+    localStorage.setItem(KEYS.MAINTENANCE, JSON.stringify(records));
+  },
   addFault: async (record: FaultRecord) => {
     if (USE_BACKEND) return await fetchAPI('/faults', 'POST', record);
 
@@ -244,6 +259,13 @@ export const api = {
 
     const records = JSON.parse(localStorage.getItem(KEYS.FAULTS) || '[]');
     return records.filter((r: FaultRecord) => r.elementId === elementId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  },
+  deleteFault: async (id: string) => {
+    if (USE_BACKEND) return await fetchAPI(`/faults/${id}`, 'DELETE');
+
+    let records = JSON.parse(localStorage.getItem(KEYS.FAULTS) || '[]');
+    records = records.filter((r: FaultRecord) => r.id !== id);
+    localStorage.setItem(KEYS.FAULTS, JSON.stringify(records));
   },
   getDailyMaintenance: async (date: string, turn?: string) => {
       if (USE_BACKEND) return await fetchAPI(`/reports/daily?date=${date}&turn=${turn}`) || [];
