@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { SECTORS, STATIONS, INSTALLATION_TYPES } from './constants';
@@ -175,9 +173,8 @@ function App() {
              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-[#006338]"></div>
                 <div className="flex justify-center mb-8 relative">
-                   {/* CAMBIAR URL DE IMAGEN AQUÍ */}
                    <img 
-                        src="https://www.adif.es/documents/20124/811001/Logo+Adif.png/bbc1e2e1-75a6-598b-5f61-cd1a71148ba1?t=1594885737132&download=true" 
+                        src="https://upload.wikimedia.org/wikipedia/commons/0/03/Adif_logo.svg" 
                         alt="Adif" 
                         className="h-16 object-contain" 
                    />
@@ -217,7 +214,10 @@ function App() {
          </div>
          
          {/* Footer */}
-         <div className="text-white text-xs opacity-80 py-4 text-center">Hecho por MACV</div>
+         <div className="text-white text-xs opacity-80 py-4 text-center">
+            <p>Hecho por MACV</p>
+            <p className="mt-1 opacity-70">Conexión: {api.isBackend() ? 'Nube (Render)' : 'Local (Demo)'}</p>
+         </div>
       </div>
     );
   }

@@ -1,5 +1,3 @@
-
-
 import { User, Agent, ElementData, MaintenanceRecord, FaultRecord, MonthlyList, UserRole, InstallationType, Roster } from '../types';
 
 // Mock Data Keys
@@ -97,6 +95,8 @@ async function fetchAPI(endpoint: string, method: string = 'GET', body?: any) {
 // --- API IMPLEMENTATION (Hybrid) ---
 
 export const api = {
+  isBackend: () => USE_BACKEND,
+
   // Users
   login: async (matricula: string, pass: string): Promise<User | null> => {
     if (USE_BACKEND) {
