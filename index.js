@@ -1,4 +1,3 @@
-
 // backend_server.js
 // COPY THIS FILE TO YOUR RENDER BACKEND REPO as index.js
 
@@ -25,10 +24,46 @@ if (!mongoUri) {
 }
 
 mongoose.connect(mongoUri)
-  .then(() => console.log('MongoDB Connected'))
+  .then(async () => {
+    console.log('MongoDB Connected');
+    await seedAdmin();
+  })
   .catch(err => console.log(err));
 
+// --- SEED INITIAL ADMIN ---
+async function seedAdmin() {
+    try {
+        const admin = await User.findOne({ matricula: 'srchicano' });
+        if (!admin) {
+            console.log('Seeding Admin User...');
+            const newAdmin = new User({
+                id: 'admin-001',
+                matricula: 'srchicano',
+                password: 'admin',
+                fullName: 'CHICANO',
+                role: 'ADMIN',
+                isApproved: true
+            });
+            await newAdmin.save();
+            console.log('Admin User Created: srchicano / admin');
+        } else {
+            console.log('Admin User already exists');
+        }
+    } catch (error) {
+        console.error('Error seeding admin:', error);
+    }
+}
+
 // --- ROUTES ---
+
+// ROOT ROUTE (Health Check)
+app.get('/', (req, res) => {
+    res.send('✅ Sigma Backend is running. Status: OK');
+});
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', dbState: mongoose.connection.readyState });
+});
 
 // USERS
 app.post('/api/users/login', async (req, res) => {
